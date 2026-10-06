@@ -23,6 +23,10 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# UI-1a WebView2 检测：读注册表
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

@@ -1,0 +1,83 @@
+/* ============================================================================
+ * app.css — 全局 reset + tokens.css 引用
+ * 依赖：src/tokens.css（round-03 §2 设计令牌）
+ * ==========================================================================*/
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--w);
+  background: var(--bp-dd); /* 最深底，图框之外 */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  user-select: none; /* 桌面应用默认禁止选中，编辑区自行放开 */
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--fs); /* §2.2 按钮字属标注层 */
+  border-radius: var(--radius-max);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 通用滚动条：贴合图纸语言，细线 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bp-d);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--wdim);
+  border-radius: var(--radius-max);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--w);
+}

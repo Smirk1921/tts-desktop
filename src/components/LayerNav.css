@@ -1,0 +1,64 @@
+/* <LayerNav> — round-03 §4.2 */
+
+.layernav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.layernav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.layernav-item:hover {
+  border-color: var(--w);
+}
+
+.layernav-item.on {
+  /* 白底蓝字反色 */
+  background: var(--w);
+  color: var(--bp);
+  border-color: var(--w);
+}
+
+.layernav-num {
+  font-family: var(--fs);
+  font-size: var(--fs-body);
+  line-height: 1;
+}
+
+.layernav-name {
+  letter-spacing: 0.5px;
+}
+
+/* 状态圆点 §4.2 --ndot */
+.layernav-dot {
+  width: var(--ndot);
+  height: var(--ndot);
+  border-radius: 50%;
+  background: var(--wdim);
+  flex-shrink: 0;
+}
+
+.layernav-item.on .layernav-dot {
+  /* on 态下圆点保持原色，不被反色吞掉 */
+  box-shadow: 0 0 0 1px var(--bp);
+}
+
+.dot-ok    { background: var(--ok); }
+.dot-blue  { background: var(--blue); }
+.dot-red   { background: var(--red); }
+.dot-amber { background: var(--amber); }

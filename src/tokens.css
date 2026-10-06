@@ -1,0 +1,98 @@
+/* ============================================================================
+ * tokens.css — round-03 §2 设计令牌转写
+ * 唯一事实源：ui-design/round-03/UI施工方案.md §2
+ *
+ * 红线：
+ *  - 全站引用变量，不写死值（grep 不得有 hex/rgb/px 出现于组件中）
+ *  - 状态色纪律 §2.5：red=危险/错误、amber=待人审、blue=代理/选中、ok=成功/存活
+ *  - 直角或 ≤2px 微圆角；禁用投影（仅图框最外层允许一道）
+ *  - 三层字族职责不混用：仿宋=标注 / 等宽=数据 / 黑体=正文
+ *  - prefers-reduced-motion:reduce 时全部 transition:none
+ * ==========================================================================*/
+
+:root {
+  /* ---- §2.1 色彩 ---- */
+  /* 底（双色体系） */
+  --bp:        #1d3a4a;   /* 主底·图纸蓝 */
+  --bp-d:      #173040;   /* 面板底 */
+  --bp-dd:     #11242f;   /* 最深底 */
+
+  /* 图线 */
+  --w:         #eef4f8;                  /* 图线白（主文字/边框） */
+  --wdim:      rgba(238, 244, 248, .62); /* 次文字/弱边框 */
+  --wfaint:    rgba(238, 244, 248, .15); /* 网格线/分隔虚线 */
+
+  /* 功能色（语义严格，§2.5） */
+  --red:       #e05c4a;   /* 危险操作 / 错误 / 死链 / 差异 */
+  --amber:     #d9a441;   /* 等待人审（待签） */
+  --blue:      #8fc0e6;   /* 代理活动 / 选中 / 链接 */
+  --ok:        #9fd8cf;   /* 成功 / 存活 / 已完成 */
+
+  /* 遮罩（ConfirmGate / 模态用）：最深底 70% 透明 */
+  --mask:      rgba(17, 36, 47, .7);
+
+  /* ---- §2.2 字体 ---- */
+  --fs:   "FangSong", "仿宋", serif;                  /* 标注层 */
+  --mono: "Cascadia Code", "Consolas", monospace;     /* 数据层 */
+  --sans: "Microsoft YaHei", "Segoe UI", sans-serif;  /* 正文层 */
+
+  /* 字号阶梯（§2.2） */
+  --fs-body:  14px;     /* 正文 */
+  --fs-panel: 12.5px;   /* 工作面内容（12.5–13 取中） */
+  --fs-data:  11.5px;   /* 数据（11–12 取中） */
+  --fs-note:  11px;     /* 标注（10.5–12 取中） */
+
+  /* 行高 */
+  --lh-body:  1.65;     /* 正文 */
+  --lh-data:  1.5;      /* 数据 / diff / 编辑器 */
+
+  /* ---- §2.3 间距与容器 ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  /* 几何约束 */
+  --radius-max: 2px;    /* 直角或 ≤2px 微圆角（红线 §2.3） */
+  --border-w:   1px;    /* 主结构边框宽 */
+
+  /* 网格底纹（§4.1 canvas 42px 网格） */
+  --grid-size: 42px;
+
+  /* 状态圆点尺寸（§4.2 LayerNav 状态圆点） */
+  --ndot: 7px;
+
+  /* 状态行高度（§3.2 状态行/会签栏共用） */
+  --statusbar-h: 40px;
+
+  /* 下一步红条宽度（§4.4 SignBlock .next 左条） */
+  --next-bar: 2.5px;
+
+  /* 投影：仅图框最外层允许一道（§2.3） */
+  --shadow-frame: 0 20px 60px rgba(0, 0, 0, .5);
+
+  /* ---- §2.6 动效令牌 ---- */
+  --ease-out:   cubic-bezier(.22, .9, .3, 1);    /* 工作面滑入 */
+  --ease-pop:   cubic-bezier(.2, 1.25, .35, 1);  /* 确认门生长 */
+  --dur-fast:   .25s;   /* 遮罩淡入 */
+  --dur-move:   .36s;   /* 工作面切换 56px 滑入 */
+  --dur-pop:    .34s;   /* 确认门生长 */
+  --dist-move:  56px;   /* 滑入位移 */
+}
+
+/* ---- §2.6 prefers-reduced-motion 红线 ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---- 工具类：数字表格化（§2.2） ---- */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

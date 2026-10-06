@@ -1,0 +1,46 @@
+/* 路由占位共用样式 — UI-2/3/4 窗口会替换为真实内容 */
+.route-stub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--sp-3);
+  color: var(--wdim);
+  font-family: var(--fs);
+}
+
+.route-stub-num {
+  font-size: 64px;
+  line-height: 1;
+  color: var(--wfaint);
+}
+
+.route-stub-name {
+  font-size: var(--fs-panel);
+  color: var(--w);
+  letter-spacing: 2px;
+}
+
+.route-stub-note {
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  font-family: var(--sans);
+}
+
+/* 工作面切换动画：translateX(56px) + opacity 滑入（§2.6） */
+.route-slide {
+  height: 100%;
+  animation: route-slide-in var(--dur-move) var(--ease-out) both;
+}
+
+@keyframes route-slide-in {
+  from {
+    transform: translateX(var(--dist-move));
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

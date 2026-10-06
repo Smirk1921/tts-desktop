@@ -1,0 +1,5 @@
+# UI-1b 在此添加：
+#   client.ts       fetch HubClient（14+2=16 条路由）
+#   sse.ts          EventSource 封装
+#   errors.ts       HubError {code, message, userAction?}
+#   capabilities.ts hub 版本兼容策略（§8.3）

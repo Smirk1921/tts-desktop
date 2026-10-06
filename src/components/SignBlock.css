@@ -1,0 +1,172 @@
+/* <SignBlock> — round-03 §4.4 */
+
+.signblock {
+  position: absolute;
+  right: var(--sp-4);
+  bottom: calc(var(--statusbar-h) + var(--sp-4));
+  width: 280px; /* §4.4 右下常驻会签栏容器固有宽 */
+  display: flex;
+  flex-direction: column;
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--w);
+  z-index: 20;
+  /* §2.3 禁投影（仅图框最外层允许一道），此处不加 */
+}
+
+.signblock-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: var(--border-w) solid var(--w);
+  background: var(--bp-dd);
+}
+
+.signblock-title {
+  color: var(--w);
+  font-size: var(--fs-panel);
+}
+
+.signblock-ver {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  color: var(--wdim);
+}
+
+/* 交付清单 */
+.signblock-rows {
+  display: flex;
+  flex-direction: column;
+  border-bottom: var(--border-w) dashed var(--wfaint);
+}
+
+.signblock-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: var(--border-w) dashed var(--wfaint);
+}
+
+.signblock-row:last-child {
+  border-bottom: none;
+}
+
+.signblock-row.next {
+  /* 当前下一步：左侧 --next-bar 红条（§4.4） */
+  padding-left: calc(var(--sp-3) + var(--next-bar));
+}
+
+.signblock-row.next::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--next-bar);
+  background: var(--red);
+}
+
+.signblock-k {
+  color: var(--w);
+}
+
+.signblock-v {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.v-ok  { color: var(--ok); }
+.v-bad { color: var(--red); }
+
+/* 出厂工序 */
+.signblock-procs {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: var(--border-w) dashed var(--wfaint);
+}
+
+.signblock-procs-title {
+  color: var(--wdim);
+  margin-bottom: var(--sp-1);
+  letter-spacing: 1px;
+}
+
+.signblock-proc {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+  color: var(--w);
+}
+
+.signblock-proc.soon {
+  color: var(--wdim);
+}
+
+.signblock-proc-name {
+  flex: 1;
+}
+
+.signblock-soon {
+  padding: 1px var(--sp-1);
+  border: var(--border-w) dashed var(--wdim);
+  border-radius: var(--radius-max);
+  font-size: var(--fs-data);
+  color: var(--wdim);
+}
+
+.signblock-proc-badge {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  color: var(--blue);
+}
+
+/* 操作 */
+.signblock-act {
+  display: flex;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.signblock-btn {
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 1px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.signblock-btn:hover {
+  background: var(--wfaint);
+}
+
+.signblock-btn.chk {
+  flex: 1;
+}
+
+.signblock-btn.sg {
+  /* 会签出厂：--red 实心，flex:1.7 */
+  flex: 1.7;
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--w);
+  font-weight: 600;
+}
+
+.signblock-btn.sg:hover {
+  background: var(--red);
+  filter: brightness(1.1);
+}

@@ -1,0 +1,39 @@
+/* <LegendBar> — round-03 §4.8 */
+
+.legendbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: var(--border-w) solid var(--wdim);
+  background: var(--bp-d);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--w);
+}
+
+.legendbar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+
+.legendbar-sym {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.legendbar-text {
+  color: var(--wdim);
+}
+
+/* 符号色（严格 §2.5 状态色纪律） */
+.sym-red   { color: var(--red); }
+.sym-amber { color: var(--amber); }
+.sym-blue  { color: var(--blue); }
+.sym-ok    { color: var(--ok); }
+.sym-w     { color: var(--w); }

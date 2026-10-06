@@ -1,0 +1,118 @@
+/* <Frame> — round-03 §4.1
+ * 双线图框：外 1px --w + 内缩 5px 一道 --wdim
+ * 42px 网格底纹仅在 canvas 区，侧栏用 --bp 盖住 */
+
+.frame-outer {
+  width: 100vw;
+  height: 100vh;
+  padding: var(--sp-3); /* 应用与屏幕边缘留一道呼吸 */
+  background: var(--bp-dd);
+  /* §2.3：仅图框最外层允许一道投影 */
+  box-shadow: var(--shadow-frame);
+}
+
+.frame-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bp);
+  border: var(--border-w) solid var(--w);
+  /* 内缩 5px 一道 --wdim 线 = 双线图框 */
+  outline: var(--border-w) solid var(--wdim);
+  outline-offset: -6px;
+  border-radius: var(--radius-max);
+}
+
+/* 图名栏 */
+.frame-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: var(--border-w) solid var(--w);
+  background: var(--bp-d);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+}
+
+.frame-title-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.frame-title-label {
+  color: var(--wdim);
+}
+
+.frame-title-name {
+  color: var(--w);
+  font-size: var(--fs-body);
+}
+
+.frame-title-sep {
+  color: var(--wfaint);
+}
+
+.frame-title-ver {
+  color: var(--w);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.frame-title-right {
+  display: flex;
+  align-items: center;
+}
+
+/* 工作面容器：42px 网格 + 底部留状态行高度 */
+.frame-canvas {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--wfaint) 1px, transparent 1px),
+    linear-gradient(90deg, var(--wfaint) 1px, transparent 1px),
+    var(--bp);
+  background-size:
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    auto;
+  padding-bottom: var(--statusbar-h);
+}
+
+/* 状态行（左下常驻） */
+.frame-status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--statusbar-h);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--sp-4);
+  background: var(--bp-d);
+  border-top: var(--border-w) solid var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--w);
+  z-index: 10; /* 高于 canvas 网格 */
+}
+
+.frame-status-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.frame-status-dot {
+  color: var(--ok); /* 已连接 = 青色 */
+}
+
+.frame-status-right {
+  color: var(--wdim);
+}

@@ -1,0 +1,252 @@
+/* <ConfirmGate> — round-03 §4.5
+ * 动效：遮罩 --dur-fast 淡入；对话框 --ease-pop + --dur-pop，
+ * transform-origin:bottom right，scale 0.7→1 + opacity 0→1 */
+
+.confirmgate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 遮罩 */
+.confirmgate-mask {
+  position: absolute;
+  inset: 0;
+  background: var(--mask);
+  animation: confirmgate-mask-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes confirmgate-mask-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 对话框：从右下会签按钮生长 */
+.confirmgate-dialog {
+  position: relative;
+  width: 480px;
+  max-width: calc(100vw - var(--sp-6) * 2);
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--red); /* 危险操作：红框 */
+  border-radius: var(--radius-max);
+  padding: var(--sp-4);
+  color: var(--w);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  transform-origin: bottom right;
+  animation: confirmgate-pop var(--dur-pop) var(--ease-pop) both;
+}
+
+@keyframes confirmgate-pop {
+  from {
+    transform: scale(0.7) translate(var(--dist-move), var(--dist-move));
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+  }
+}
+
+/* 标题：红色方框标 */
+.confirmgate-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.confirmgate-marker {
+  width: 12px;
+  height: 12px;
+  background: var(--red);
+  border-radius: var(--radius-max);
+  flex-shrink: 0;
+}
+
+.confirmgate-title {
+  margin: 0;
+  font-family: var(--fs);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--w);
+  letter-spacing: 1px;
+}
+
+/* 影响清单（等宽） */
+.confirmgate-list {
+  margin-bottom: var(--sp-3);
+}
+
+.confirmgate-list-title {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  margin-bottom: var(--sp-1);
+}
+
+.confirmgate-list ul {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  list-style: none;
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  max-height: 180px;
+  overflow: auto;
+}
+
+.confirmgate-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 2px 0;
+}
+
+.confirmgate-file {
+  color: var(--w);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirmgate-diff {
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* 素材警告（红色虚线框） */
+.confirmgate-warn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--border-w) dashed var(--red);
+  border-radius: var(--radius-max);
+  background: transparent;
+  font-size: var(--fs-panel);
+}
+
+.confirmgate-warn-icon {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.confirmgate-warn-text {
+  flex: 1;
+  color: var(--w);
+}
+
+.confirmgate-warn-link {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--blue);
+  text-decoration: underline;
+  padding: 0;
+}
+
+.confirmgate-warn-link:hover {
+  color: var(--w);
+}
+
+/* 必勾"我已知晓" */
+.confirmgate-chk {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.confirmgate-chk input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  appearance: none;
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.confirmgate-chk input[type="checkbox"]:checked {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.confirmgate-chk input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--w);
+  font-size: var(--fs-data);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.confirmgate-chk-label {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--w);
+}
+
+/* 双按钮 */
+.confirmgate-act {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}
+
+.confirmgate-btn {
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 1px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+
+.confirmgate-btn.refuse:hover {
+  background: var(--wfaint);
+}
+
+.confirmgate-btn.sign {
+  background: var(--red);
+  border-color: var(--red);
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.confirmgate-btn.sign:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.confirmgate-btn.sign:disabled {
+  background: transparent;
+  border-color: var(--wdim);
+  color: var(--wdim);
+  cursor: not-allowed;
+}
