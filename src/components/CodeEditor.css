@@ -1,0 +1,27 @@
+/* <CodeEditor> 代码编辑器 — Stage A2
+ * 容器 100% 高度；.cm-editor 占满容器；无外边框（边框由父容器提供）。
+ * 色板/字号/字族全部在 CodeEditor.tsx 的 ttsTheme 内经 tokens 变量映射。 */
+
+.codeeditor {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bp-dd);
+}
+
+/* @uiw/react-codemirror 外层 .cm-theme 包裹层默认无高度，需补齐 */
+.codeeditor .cm-theme,
+.codeeditor .cm-editor {
+  height: 100%;
+}
+
+/* 键盘可达性：编辑器获得焦点时容器给一道 wfaint 描边（非边框，不占布局） */
+.codeeditor:focus-within {
+  outline: var(--border-w) solid var(--wfaint);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 去掉 CodeMirror baseTheme 默认的暗色 dotted focus 外框 */
+.codeeditor .cm-editor.cm-focused {
+  outline: none;
+}

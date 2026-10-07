@@ -1,0 +1,62 @@
+/* ============================================================================
+ * Agent.css — ② 代理面路由布局（UI-2 Stage B2）
+ * 骨架（round-03 §3.1）：工作区（JobSheet 作业流水）+ 参数标注区（Lua 直执 + 事件流）
+ *
+ * 红线：
+ *  - 全站引用 tokens.css 变量，不写死色值/间距（320px 栏宽为任务书指定列宽）；
+ *  - 状态色由各 Stage A 组件自管（JobSheet/LuaExecPanel/EventFlow），本文件只管骨架；
+ *  - 无投影、直角（--radius-max 交给组件内部边框）。
+ * ==========================================================================*/
+
+/* 三区骨架：工作区 1fr + 参数标注区 320px 定宽（§3.1） */
+.agent-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-2);
+}
+
+/* ---- 工作区：作业流水（JobSheet 混排行，纵向滚动） ---- */
+.agent-work {
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  /* grid 子项默认 min-width:auto，长参数/结果摘要会把列撑破，收窄交给 JobSheet 截断 */
+  min-width: 0;
+}
+
+/* 空态：无 job 且无 SSE 事件（正文说明层 = 黑体，§2.2 字族职责） */
+.agent-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+/* ---- 参数标注区：Lua 直执（内容高）+ 事件流（吃满余量） ---- */
+.agent-param {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Lua 直执等自定高块：不被压缩 */
+.agent-param > * {
+  flex-shrink: 0;
+}
+
+/* 末位 = <EventFlow>：占满剩余高度；.eventflow 自带
+   height:100% + min-height:0 + 内部滚动（EventFlow.css），此处负责给它约束 */
+.agent-param > :last-child {
+  flex: 1;
+  min-height: 0;
+}

@@ -1,0 +1,277 @@
+/* ============================================================================
+ * ① 代码面路由样式 — Stage B1（UI-2）
+ * 三区骨架（round-03 §3.1）：.code-obj 对象区 / .code-work 工作区 / .code-param 参数标注区。
+ * 色板 / 字族 / 字号 / 间距全部经 tokens.css 变量引用，不写死色值；
+ * 仅栅格列宽（220px / 260px）按 round-03 §3.1 布局规格写定。
+ * ==========================================================================*/
+
+.code-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-2);
+  min-height: 0;
+}
+
+/* ---- 对象区（左）：差异文件树 ---- */
+.code-obj {
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--wfaint);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ---- 工作区（中）：Tab + 编辑器 / diff ---- */
+.code-work {
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.code-tabs {
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.code-tabs button {
+  padding: var(--sp-1) var(--sp-3);
+  background: transparent;
+  border: none;
+  border-right: var(--border-w) solid var(--wfaint);
+  color: var(--wdim);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  cursor: pointer;
+}
+
+.code-tabs button[data-on="true"] {
+  background: var(--bp-d);
+  color: var(--w);
+}
+
+/* Tab 行右端：当前文件 + 未保存圆点（等宽=数据） */
+.code-tabs-file {
+  margin-left: auto;
+  align-self: center;
+  padding: 0 var(--sp-2);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  color: var(--wdim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-tabs-file[data-dirty="true"] {
+  color: var(--amber);
+}
+
+.code-editwrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* CodeEditor 根元素在 flex 列内撑满剩余高度 */
+.code-editwrap > .codeeditor {
+  flex: 1;
+  min-height: 0;
+}
+
+.code-diffwrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 空态 / 提示（工作区中央）：黑体=说明文字 */
+.code-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  text-align: center;
+  color: var(--wdim);
+  font-family: var(--sans);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+}
+
+.code-empty-error {
+  color: var(--red);
+}
+
+.code-empty-amber {
+  color: var(--amber);
+}
+
+/* ---- 409 冲突条：红=错误（状态色纪律 §2.5） ---- */
+.code-conflict {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--red);
+  color: var(--w);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+}
+
+.code-conflict-sym {
+  font-family: var(--mono);
+}
+
+.code-conflict-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.code-conflict button {
+  background: transparent;
+  border: var(--border-w) solid var(--w);
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  padding: 0 var(--sp-2);
+  cursor: pointer;
+}
+
+.code-conflict button:hover {
+  background: var(--w);
+  color: var(--red);
+}
+
+/* ---- 参数标注区（右）：仿宋标注 + 等宽数据 ---- */
+.code-param {
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--wfaint);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.code-param-title {
+  color: var(--wdim);
+  letter-spacing: 2px;
+  border-bottom: var(--border-w) solid var(--wfaint);
+  padding-bottom: var(--sp-1);
+}
+
+.code-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.code-meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.code-meta dt {
+  color: var(--wdim);
+  flex: none;
+}
+
+.code-meta dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-meta dd[data-tone="ok"] {
+  color: var(--ok);
+}
+
+.code-meta dd[data-tone="amber"] {
+  color: var(--amber);
+}
+
+.code-meta dd[data-tone="red"] {
+  color: var(--red);
+}
+
+.code-pull-note {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  color: var(--wdim);
+}
+
+.code-error {
+  border: var(--border-w) solid var(--red);
+  color: var(--red);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  word-break: break-all;
+}
+
+/* 操作按钮组：置底；写回=危险（红边），保存/拉取=常规 */
+.code-acts {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.code-btn {
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  cursor: pointer;
+}
+
+.code-btn:hover:enabled {
+  border-color: var(--w);
+}
+
+.code-btn-danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.code-btn-danger:hover:enabled {
+  background: var(--red);
+  color: var(--w);
+}
+
+.code-btn:disabled {
+  background: transparent;
+  border-color: var(--wfaint);
+  color: var(--wdim);
+  cursor: not-allowed;
+}
+
+.code-param-note {
+  color: var(--wdim);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+}

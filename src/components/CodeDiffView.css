@@ -1,0 +1,104 @@
+/* <CodeDiffView> 代码面·diff 视图（条目级） — Stage A2
+ * 整行状态色（红线 §10）：added=青 / modified=琥珀 / deleted=红
+ * 空数组 → "工作区与游戏内一致"（仿宋 + wdim） */
+
+.codediff {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bp-dd);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+}
+
+.codediff-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+/* 分组计数：数字表格化（红线 §10.6） */
+.codediff-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.codediff-list {
+  margin: 0;
+  padding: 0 var(--sp-1) var(--sp-1);
+  list-style: none;
+}
+
+.codediff-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: calc(var(--fs-data) * var(--lh-data) + var(--sp-1));
+  padding: 0 var(--sp-2);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.codediff-item[data-clickable="true"] {
+  cursor: pointer;
+}
+
+.codediff-item[data-clickable="true"]:hover {
+  background: var(--bp-d);
+}
+
+.codediff-item[data-clickable="true"]:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 整行状态色 */
+.codediff-item[data-status="added"]    { color: var(--ok); }
+.codediff-item[data-status="modified"] { color: var(--amber); }
+.codediff-item[data-status="deleted"]  { color: var(--red); }
+
+.codediff-sym {
+  flex: none;
+  width: 2ch;
+  text-align: center;
+  font-weight: 600;
+}
+
+.codediff-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* kind 徽标：仿宋小字 + 微圆角线框（≤2px，红线 §10.4） */
+.codediff-kind {
+  flex: none;
+  margin-left: auto;
+  padding: 0 var(--sp-1);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  line-height: 1.5;
+  color: var(--wdim);
+}
+
+/* 空态：仿宋 + wdim */
+.codediff-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-4) var(--sp-3);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+.codediff-empty-sym {
+  font-family: var(--mono);
+  color: var(--ok);
+}
