@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 应用图标母版 = UI-4 Stage B2（依据 round-03 第 8 节：图框 + 工序章元素，青蓝图纸 + 红色会签章）
+     语言约束：扁平、零渐变、零投影；直角为主，微圆角（8px）只出现在会签章。
+     色值说明：本文件即色彩令牌的来源点（图纸蓝 1d3a4a / 危险红 e05c4a / 代理蓝 8fc0e6 /
+     工序章青 6fc3a8 / 章灰 5a7a8a），故此处写死色值；前端组件层仍一律引用 tokens.css 变量。 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- 底：图纸青蓝 -->
+  <rect x="0" y="0" width="1024" height="1024" fill="#1d3a4a"/>
+
+  <!-- 图框：白色双线（外框 inset 48 / 线宽 8；内框 inset 72 / 线宽 3），直角 -->
+  <rect x="52" y="52" width="920" height="920" fill="none" stroke="#ffffff" stroke-width="8"/>
+  <rect x="73.5" y="73.5" width="877" height="877" fill="none" stroke="#ffffff" stroke-width="3"/>
+
+  <!-- 工序章：框内底部五等分横排（高 64、间距 8），暗示五章 -->
+  <rect x="96" y="856" width="160" height="64" fill="#6fc3a8"/>
+  <rect x="264" y="856" width="160" height="64" fill="#8fc0e6"/>
+  <rect x="432" y="856" width="160" height="64" fill="#e05c4a"/>
+  <rect x="600" y="856" width="160" height="64" fill="#6fc3a8"/>
+  <rect x="768" y="856" width="160" height="64" fill="#5a7a8a"/>
+
+  <!-- 红色会签章：右上区域，绕中心 -12° 旋转 -->
+  <g transform="rotate(-12 748 336)">
+    <rect x="618" y="206" width="260" height="260" rx="8" ry="8"
+          fill="#e05c4a" fill-opacity="0.15"
+          stroke="#e05c4a" stroke-width="12"/>
+    <!-- 基线偏移 +45（=0.375em @120px）：实测使 CJK 字形视觉盒中心落在印章几何中心上 -->
+    <text x="748" y="381"
+          text-anchor="middle"
+          font-family="Microsoft YaHei, Segoe UI, sans-serif"
+          font-size="120" font-weight="700" fill="#ffffff">签</text>
+  </g>
+</svg>

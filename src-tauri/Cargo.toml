@@ -1,8 +1,8 @@
 [package]
 name = "tts-desktop"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "TTS 图包制作维护工作台（Tauri 壳）"
+authors = ["Smirk1921"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

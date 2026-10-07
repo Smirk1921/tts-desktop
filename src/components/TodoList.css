@@ -1,0 +1,89 @@
+/* <TodoList> 待办清单 — UI-4 Stage A1（a-deep.html .ov-blk + .todo-line）
+ * 块：1px --wdim 外框 + 底 --bp（总览面板底）；标题行 1px --wdim 实线分块；
+ * 行间 1px dashed --wfaint 虚线分组（§2.4 分隔三级）。
+ * 字族：标题与行文本仿宋（标注层，照 a-deep），符号等宽（数据层）。
+ * 颜色全部引用 tokens.css 变量，不写死色值。 */
+
+.todolist {
+  border: var(--border-w) solid var(--wdim);
+  background: var(--bp);
+}
+
+.todolist-head {
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: var(--border-w) solid var(--wdim);
+}
+
+.todolist-title {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 3px;
+  color: var(--w);
+}
+
+.todolist-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: var(--border-w) dashed var(--wfaint);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.todolist-line:last-child,
+.todolist-empty:last-child {
+  border-bottom: none;
+}
+
+.todolist-line:hover {
+  background: var(--bp-d);
+}
+
+.todolist-line:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 行首符号：固定槽宽（对齐），等宽字符；颜色由数据侧语义决定（§2.5） */
+.todolist-mk {
+  flex: none;
+  width: var(--sp-4);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--fs-note);
+}
+
+.todolist-line[data-color="red"] .todolist-mk {
+  color: var(--red);
+}
+
+.todolist-line[data-color="blue"] .todolist-mk {
+  color: var(--blue);
+}
+
+.todolist-line[data-color="amber"] .todolist-mk {
+  color: var(--amber);
+}
+
+.todolist-line[data-color="ok"] .todolist-mk {
+  color: var(--ok);
+}
+
+.todolist-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 空态：一行灰字，不留空白块 */
+.todolist-empty {
+  padding: var(--sp-3) var(--sp-4);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  color: var(--wdim);
+}

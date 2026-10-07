@@ -1,0 +1,76 @@
+/* <LayerTiles> 四面状态磁贴 — UI-4 Stage A1（a-deep.html .ov-side h4 + .ftile）
+ * 标题：仿宋小字 + 3px 字距 + 1px --w 实线下划线（§2.4 分版面）；行间
+ * 1px dashed --wfaint 虚线分组（分组用虚线）。
+ * 字族：面名仿宋（标注层）/ 取值等宽（数据层），不混用（§2.2）。
+ * 状态色：取值色由 data-tone 决定（bad=--red 差异/死链、blue=--blue 代理、
+ * ok=--ok 一致、dim=--wdim 中性计数），全部引用 tokens.css 变量。 */
+
+.layertiles {
+  display: flex;
+  flex-direction: column;
+}
+
+.layertiles-head {
+  padding-bottom: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  border-bottom: var(--border-w) solid var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 3px;
+  color: var(--wdim);
+}
+
+.layertiles-tile {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-1);
+  border-bottom: var(--border-w) dashed var(--wfaint);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.layertiles-tile:last-child {
+  border-bottom: none;
+}
+
+.layertiles-tile:hover {
+  background: var(--bp-d);
+}
+
+.layertiles-tile:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+.layertiles-k {
+  color: var(--w);
+}
+
+/* 取值：等宽小字（数据层）+ 数字表格化（§2.2） */
+.layertiles-v {
+  font-family: var(--mono);
+  font-size: var(--fs-note);
+  line-height: var(--lh-data);
+  color: var(--wdim);
+}
+
+.layertiles-tile[data-tone="bad"] .layertiles-v {
+  color: var(--red);
+}
+
+.layertiles-tile[data-tone="blue"] .layertiles-v {
+  color: var(--blue);
+}
+
+.layertiles-tile[data-tone="ok"] .layertiles-v {
+  color: var(--ok);
+}
+
+/* ④ 素材行内的死链计数：红字（同一行内独立着色，--red = 死链） */
+.layertiles-bad {
+  color: var(--red);
+}

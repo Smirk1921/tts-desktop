@@ -1,8 +1,4 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 /// 探测 tts-hub 控制通道端口是否可连（UI-1b，施工方案 v0.8.0 §8.2 方案 C）。
 ///
@@ -62,13 +58,24 @@ fn detect_webview2() -> Option<String> {
     Some("non-windows".to_string())
 }
 
+/// WebView2 运行时可用性查询命令（UI-4 Stage B2）。
+///
+/// 前端 HubLauncher 在 checking 阶段与 `check_hub` 一并 invoke 此命令：
+/// 返回 false 时在引导面板顶部加一条红条 +「下载 WebView2」按钮
+/// （按钮经 tauri-plugin-opener 打开微软官方引导安装链接）。
+/// 复用 setup 钩子里的同一探测函数，保证两处口径一致。
+#[tauri::command]
+fn is_webview2_present() -> bool {
+    detect_webview2().is_some()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .setup(|_app| {
-            // UI-1a 验收点：WebView2 启动检测钩子
-            // 缺失时通过 stderr 警告 + 在窗口标题里追加提示（UI-4 再加原生对话框引导安装）
+        .setup(|app| {
+            // UI-1a 验收点：WebView2 启动检测钩子（UI-4 Stage B2 补窗口标题提示）
+            use tauri::Manager;
             match detect_webview2() {
                 Some(version) => {
                     println!("[tts-desktop] WebView2 detected: {}", version);
@@ -78,11 +85,17 @@ pub fn run() {
                         "[tts-desktop] WebView2 Runtime NOT detected. \
                          Please install from https://go.microsoft.com/fwlink/p/?LinkId=2124703"
                     );
+                    // 原生对话框引导超出本次范围（wry 起窗即依赖 WebView2），
+                    // 改为：窗口标题追加提示 + 前端红条（is_webview2_present）。
+                    if let Some(window) = app.get_webview_window("main") {
+                        let base = window.title().unwrap_or_default();
+                        let _ = window.set_title(&format!("{base}（缺少 WebView2 运行时）"));
+                    }
                 }
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, check_hub])
+        .invoke_handler(tauri::generate_handler![check_hub, is_webview2_present])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

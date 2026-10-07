@@ -29,6 +29,7 @@ src-tauri/target/
 
 # UI-4 screenshot compare artifacts (round-03/shots is baseline, in git)
 screenshots/current/
+screenshots/compare-report.json
 
 # Stage-D test outputs (mirror tts-toolkit convention)
 .stage-d/

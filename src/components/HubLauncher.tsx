@@ -3,15 +3,20 @@
  *
  * 状态机：
  *   1. checking → Tauri invoke('check_hub') TCP 探测 39995（非 Tauri 环境<纯浏览器 dev>退化为
- *      直接 fetch /v1/status，1500ms）
+ *      直接 fetch /v1/status，1500ms）；同轮一并 invoke('is_webview2_present')（UI-4 Stage B2）
  *   2. 端口通 → client.status() → capabilitiesFromStatus() →
  *      isSupported ? onReady(caps) : 「版本过旧」面板（<0.7.0 或无 version 字段）
  *   3. 端口不通 → 引导对话框：安装命令 + 启动命令（各带一键复制）+「我已启动，重试」
  *
+ * UI-4 Stage B2：WebView2 运行时缺失时，引导面板顶部加红条（危险语义 §2.5）+
+ * 「下载 WebView2」按钮（tauri-plugin-opener 打开微软官方引导链接）。
+ * 命令不可用（旧壳 / 纯浏览器）时不报警，避免误报。
+ *
  * 样式：tokens.css——var(--bp-d) 面板底 + var(--w) 边框 + var(--amber) 警示（§2.5）。
  */
 import { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { HUB_BASE_URL } from "../hub/client";
 import { hubClient } from "../hub/HubContext";
 import { capabilitiesFromStatus } from "../hub/capabilities";
@@ -22,6 +27,8 @@ const HUB_PORT = 39995;
 const PROBE_TIMEOUT_MS = 1500;
 const INSTALL_CMD = "npm install -g @smirk1921/tts-toolkit";
 const START_CMD = "tts-hub";
+/** 微软官方 WebView2 Runtime 引导安装链接（Evergreen Bootstrapper） */
+const WEBVIEW2_URL = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
 
 type Phase = "checking" | "guide" | "unsupported";
 
@@ -34,11 +41,16 @@ export default function HubLauncher({ onReady }: HubLauncherProps) {
   const [phase, setPhase] = useState<Phase>("checking");
   const [detected, setDetected] = useState("");
   const [busy, setBusy] = useState(false);
+  /** WebView2 运行时缺失（UI-4 Stage B2）；仅在权威判定为 false 时置位 */
+  const [wv2Missing, setWv2Missing] = useState(false);
 
   const check = useCallback(async () => {
     setBusy(true);
     try {
-      if (!(await probePort())) {
+      // 端口探测与 WebView2 检测同轮发起；后者失败按「不可知」处理，不误报
+      const [hubUp, wv2Present] = await Promise.all([probePort(), probeWebview2()]);
+      setWv2Missing(!wv2Present);
+      if (!hubUp) {
         setPhase("guide");
         return;
       }
@@ -87,6 +99,23 @@ export default function HubLauncher({ onReady }: HubLauncherProps) {
               <span className="hublauncher-marker" aria-hidden />
               <h1 className="hublauncher-title">未检测到 tts-hub</h1>
             </header>
+            {wv2Missing && (
+              <div className="hublauncher-wv2" role="alert">
+                <span className="hublauncher-wv2-mark" aria-hidden>
+                  ⚠
+                </span>
+                <p className="hublauncher-wv2-text">
+                  缺少 WebView2 运行时：本应用界面可能无法渲染。请先安装并重启应用。
+                </p>
+                <button
+                  type="button"
+                  className="hublauncher-btn hublauncher-btn--sm"
+                  onClick={() => void openWebview2Download()}
+                >
+                  下载 WebView2
+                </button>
+              </div>
+            )}
             <p className="hublauncher-note">
               桌面应用经 hub（{HUB_BASE_URL.replace(/^http:\/\//, "")}）与
               Tabletop Simulator 通信。请在终端先启动：
@@ -143,6 +172,29 @@ async function probePort(): Promise<boolean> {
     });
   } catch {
     return probeHttp();
+  }
+}
+
+/**
+ * WebView2 运行时探测（UI-4 Stage B2）：Rust 侧 is_webview2_present（查注册表）。
+ * 非 Tauri 环境（纯浏览器 dev）与命令缺失（旧壳 / 调用异常）一律按 true 返回——
+ * 只有拿到权威的 false 才提示，避免误报。
+ */
+async function probeWebview2(): Promise<boolean> {
+  if (!isTauri()) return true;
+  try {
+    return await invoke<boolean>("is_webview2_present");
+  } catch {
+    return true;
+  }
+}
+
+/** 打开微软官方 WebView2 引导安装链接；非 Tauri 环境退化为新标签页 */
+async function openWebview2Download(): Promise<void> {
+  try {
+    await openUrl(WEBVIEW2_URL);
+  } catch {
+    window.open(WEBVIEW2_URL, "_blank", "noopener,noreferrer");
   }
 }
 

@@ -28,19 +28,18 @@
   font-family: var(--sans);
 }
 
-/* 工作面切换动画：translateX(56px) + opacity 滑入（§2.6） */
+/* 工作面切换动画：translateX(var(--dist-move)) + opacity 滑入（§2.6 第二件套）
+ * transition 驱动（不用 keyframes）以便截图工具抓到过渡帧；
+ * 初始 pre 态 .route-slide-pre 由 <RouteSlide> 挂载时带上，双 rAF 后移除并触发过渡。
+ * 位移由 .frame-canvas{overflow:hidden} 兜住，不产生横向滚动。 */
 .route-slide {
   height: 100%;
-  animation: route-slide-in var(--dur-move) var(--ease-out) both;
+  transition:
+    transform var(--dur-move) var(--ease-out),
+    opacity var(--dur-move) var(--ease-out);
 }
 
-@keyframes route-slide-in {
-  from {
-    transform: translateX(var(--dist-move));
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+.route-slide-pre {
+  transform: translateX(var(--dist-move));
+  opacity: 0;
 }

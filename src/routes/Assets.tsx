@@ -55,6 +55,7 @@ import type { AssetGroupCount } from "../components/AssetsGroupNav";
 import AssetsTable from "../components/AssetsTable";
 import type { AssetRow } from "../components/AssetsTable";
 import ImportPreviewDialog from "../components/ImportPreviewDialog";
+import { RouteSlide } from "../components/RouteSlide";
 
 import { useConfirmGate, useHub, type ConfirmRequest } from "../hub/HubContext";
 import { useSseEvents } from "../hub/useSseEvents";
@@ -637,7 +638,7 @@ function AssetsInner(): ReactElement {
   const rootBase = root === null ? "—" : root.split(/[\\/]/).filter(Boolean).pop() ?? root;
 
   return (
-    <div className="route-slide">
+    <RouteSlide>
       <div className="assets-layout">
         {/* 对象区：类型分组导航 */}
         <aside className="assets-obj">
@@ -789,7 +790,7 @@ function AssetsInner(): ReactElement {
         onClose={() => setImportOpen(false)}
         onConfirmImport={handleConfirmImport}
       />
-    </div>
+    </RouteSlide>
   );
 }
 
