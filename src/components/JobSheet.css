@@ -1,0 +1,168 @@
+/* <JobSheet> 作业流水 — Stage A3（代理面工作区）
+ * tokens 全引用；状态色（§2.5）：run=蓝 / done=ok / fail=red / wait=amber
+ * SSE error 行整行反色；行距 VS Code 档位（紧凑） */
+
+.jobsheet {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+}
+
+/* ---- 行骨架：编号 / 工具 / 参数 / 结果（VS Code 档位紧凑行距） ---- */
+.ajob {
+  display: grid;
+  grid-template-columns: 3ch auto minmax(0, 1fr) auto;
+  gap: var(--sp-2);
+  align-items: baseline;
+  padding: calc(var(--sp-1) / 2) var(--sp-2);
+  border-bottom: var(--border-w) dashed var(--wfaint);
+}
+
+/* SSE 行：时间戳 / 类型标 / 消息 */
+.ajob.sse {
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+/* 用户指令行（U 编号）：编号 / 指令正文 */
+.ajob.u {
+  grid-template-columns: 3ch minmax(0, 1fr);
+  background: var(--wfaint);
+}
+
+/* ---- 编号 / 时间戳：等宽 + 表格化数字 ---- */
+.ajob-no {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--wdim);
+}
+
+.ajob-ts {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wdim);
+}
+
+/* ---- 作业行 ---- */
+.ajob-tool {
+  font-family: var(--mono);
+  color: var(--w);
+}
+
+.ajob-args {
+  /* 参数列 = 仿宋标注层（三层字族职责） */
+  font-family: var(--fs);
+  color: var(--wdim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ajob-res {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wdim);
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ajob[data-state="done"] .ajob-res {
+  /* ✓ 成功 = 青（§2.5） */
+  color: var(--ok);
+}
+
+.ajob[data-state="fail"] .ajob-res {
+  /* ✗ 错误 = 红 */
+  color: var(--red);
+}
+
+.ajob[data-state="wait"] .ajob-res {
+  /* ⏸ 待人审 = 琥珀 */
+  color: var(--amber);
+}
+
+/* run 态：左 2.5px 蓝条（复用 --next-bar 宽）+ tool 加粗蓝 + ◌ 旋转 */
+.ajob[data-state="run"] {
+  position: relative;
+  padding-left: calc(var(--sp-2) + var(--next-bar));
+}
+
+.ajob[data-state="run"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--next-bar);
+  background: var(--blue);
+}
+
+.ajob[data-state="run"] .ajob-tool {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.ajob[data-state="run"] .ajob-res {
+  color: var(--w);
+}
+
+.ajob[data-state="run"] .ajob-sym {
+  display: inline-block;
+  animation: ajob-spin 1s linear infinite;
+}
+
+@keyframes ajob-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- SSE 系统事件行 ---- */
+.ajob-sse-type {
+  /* 类型标 = 仿宋标注层 */
+  font-family: var(--fs);
+  color: var(--wdim);
+  letter-spacing: 0.5px;
+}
+
+.ajob-sse-msg {
+  font-family: var(--mono);
+  color: var(--w);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ajob.sse[data-type="error"] {
+  /* TTS Error：整行反色（--red 底 + --w 字） */
+  background: var(--red);
+  border-bottom-color: transparent;
+}
+
+.ajob.sse[data-type="error"] .ajob-ts,
+.ajob.sse[data-type="error"] .ajob-sse-type,
+.ajob.sse[data-type="error"] .ajob-sse-msg {
+  color: var(--w);
+}
+
+/* ---- 用户指令行（U 编号） ---- */
+.ajob-text {
+  /* 用户指令 = 正文层（三层字族职责） */
+  font-family: var(--sans);
+  font-size: var(--fs-panel);
+  color: var(--w);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

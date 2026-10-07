@@ -1,25 +1,40 @@
 /**
- * App.tsx — UI-1a 状态机 + UI-1b hub 接入
+ * App.tsx — UI-1b hub 门 + UI-2 Stage C 顶层接线
  *
  * 职责：
- *  - UI-1b：caps === null → <HubLauncher>（探测 39995 / 引导启动 / 版本兼容门）；
- *    验证通过后经 HubContext.Provider 下发 client 单例 + caps，渲染 Frame + 当前路由
- *  - 持有 activeLayer（0..4），渲染 Frame + LayerNav + LegendBar + 当前路由 + SignBlock + ConfirmGate
- *  - caps 就绪后轮询 /v1/status → 真实连接状态 → Frame 状态行
+ *  - caps === null → <HubLauncher>（探测 39995 / 引导启动 / 版本兼容门）；
+ *    验证通过后按固定顺序挂三层 Provider：
+ *      HubContext.Provider（client 单例 + caps）
+ *        → ConfirmGateProvider（全站确认门 request 单槽）
+ *          → SseProvider（App.tsx 顶层唯一 SSE 订阅，红线 3）
+ *    → <AppInner> 渲染 Frame + LayerNav + LegendBar + 当前路由 + SignBlock
+ *  - ConfirmGate 全站唯一实例在 <ConfirmGateHost>（本文件，红线 1）：从
+ *    ConfirmGateContext 读 request 渲染；业务层一律经 useConfirmGate().ask(req)
+ *    打开（红线 2），不再各自渲染 <ConfirmGate>
+ *  - caps 就绪后轮询 /v1/status（30s）→ 真实 TTS 连接状态 → Frame 状态行
+ *  - LayerNav 圆点真实化（红线 4）：② 代理面 dot 由 SSE 连接态实时计算；
+ *    ① 代码面 dirty 上报待 Code 面提供（现仍占位 ok）
  *
- * UI-2/3/4 在此接入：
- *  - LayerNav 圆点按真实工作面状态计算（现仍为演示硬编码）
- *  - ConfirmGate 接真实 /v1/push confirm:true；死链 / 待签数接真实数据
+ * UI-3/4 在此接入：
+ *  - ③ 卡牌 / ④ 素材 dot 接真实体检状态；死链 / 待签数接真实数据
+ *  - SignBlock.onSign 接真实会签出厂流程
  */
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState, type JSX } from "react";
 import Frame from "./components/Frame";
-import LayerNav, { LayerItem } from "./components/LayerNav";
+import LayerNav, { type LayerItem } from "./components/LayerNav";
 import LegendBar from "./components/LegendBar";
 import SignBlock from "./components/SignBlock";
 import ConfirmGate from "./components/ConfirmGate";
 import HubLauncher from "./components/HubLauncher";
 
-import { HubContext, hubClient } from "./hub/HubContext";
+import {
+  ConfirmGateContext,
+  ConfirmGateProvider,
+  HubContext,
+  hubClient,
+  useHub,
+} from "./hub/HubContext";
+import { SseProvider, useSseEvents } from "./hub/useSseEvents";
 import type { HubCapabilities } from "./hub/capabilities";
 import type { HubStatus } from "./hub/client";
 
@@ -31,50 +46,37 @@ import Assets from "./routes/Assets";
 
 type LayerId = "overview" | "code" | "agent" | "cards" | "assets";
 
-const LAYERS: LayerItem[] = [
-  { id: "overview", num: "⓪", name: "总览", dot: "ok",   hint: "⓪ 总览（UI-4 填充）" },
-  { id: "code",     num: "①", name: "代码", dot: "ok",   hint: "① 代码（UI-2 填充）" },
-  { id: "agent",    num: "②", name: "代理", dot: "blue", hint: "② 代理（UI-2 填充）" },
-  { id: "cards",    num: "③", name: "卡牌", dot: "amber",hint: "③ 卡牌（UI-3 填充）" },
-  { id: "assets",   num: "④", name: "素材", dot: "red",  hint: "④ 素材（UI-3 填充）" },
-];
-
-const PACK = { name: "mypack", version: "v1.3", branch: "main" };
+const PACK = { name: "mypack", version: "v0.8.0", branch: "main" };
 
 const STATUS_POLL_MS = 30_000;
 
 const SIGN_CHECKS = [
-  { k: "版本", v: "v1.3 · 已生成", tone: "ok" as const },
-  { k: "校样", v: "3 处差异",     tone: "bad" as const, next: true },
-  { k: "打样", v: "未开始",       tone: "ok" as const },
-  { k: "出厂", v: "—",            tone: "ok" as const },
+  { k: "版本", v: "v0.8.0", tone: "ok" as const },
+  { k: "校样", v: "通过", tone: "ok" as const },
+  { k: "打样", v: "待", tone: "bad" as const, next: true },
+  { k: "出厂", v: "未", tone: "bad" as const },
 ];
 
 const SIGN_PROCS = [
-  { name: "写回游戏",  state: "open" as const },
-  { name: "发布 V2",   state: "soon" as const },
-  { name: "同步 V2",   state: "soon" as const },
+  { name: "写回游戏", state: "open" as const },
+  { name: "发布 V2", state: "soon" as const, badge: "v0.9.0" },
+  { name: "同步 V2", state: "soon" as const, badge: "v0.9.0" },
 ];
 
-const DEMO_CONFIRM_ITEMS = [
-  { file: "scripts/global.lua",  diff: "+12 -3" },
-  { file: "scripts/card_01.lua", diff: "+5 -0" },
-  { file: "ui/table.xml",        diff: "重写" },
-];
+/** 会签栏 + 状态行 + 确认门宿主（须在 HubContext / ConfirmGateProvider / SseProvider 内） */
+function AppInner(): JSX.Element {
+  const { client } = useHub();
+  const { state: sseState } = useSseEvents();
 
-function App() {
-  const [caps, setCaps] = useState<HubCapabilities | null>(null);
   const [status, setStatus] = useState<HubStatus | null>(null);
   const [activeLayer, setActiveLayer] = useState<LayerId>("overview");
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // caps 就绪后轮询 /v1/status：真实 TTS 连接状态 → Frame 状态行
   useEffect(() => {
-    if (caps === null) return;
     let cancelled = false;
-    const refresh = async () => {
+    const refresh = async (): Promise<void> => {
       try {
-        const s = await hubClient.status();
+        const s = await client.status();
         if (!cancelled) setStatus(s);
       } catch {
         if (!cancelled) setStatus(null);
@@ -86,32 +88,35 @@ function App() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [caps]);
+  }, [client]);
 
-  const routeElement = (() => {
-    switch (activeLayer) {
-      case "overview": return <Overview />;
-      case "code":     return <Code />;
-      case "agent":    return <Agent />;
-      case "cards":    return <Cards />;
-      case "assets":   return <Assets />;
-    }
-  })();
+  // LayerNav 圆点：② 代理面按 SSE 连接态实时计算（红线 4）；
+  // ① 代码面 TODO：dirty 状态由 Code 面上报后再真实化（现占位 ok）
+  const layers: LayerItem[] = [
+    { id: "overview", num: "⓪", name: "总览", dot: "ok", hint: "⓪ 总览（UI-4 填充）" },
+    { id: "code", num: "①", name: "代码", dot: "ok", hint: "① 代码（dot TODO：由 Code 面上报 dirty）" },
+    {
+      id: "agent",
+      num: "②",
+      name: "代理",
+      dot: sseState === "open" ? "ok" : sseState === "connecting" ? "blue" : "amber",
+      hint: `② 代理 · SSE ${sseState}`,
+    },
+    { id: "cards", num: "③", name: "卡牌", dot: "ok", hint: "③ 卡牌（UI-3 填充）" },
+    { id: "assets", num: "④", name: "素材", dot: "ok", hint: "④ 素材（UI-3 填充）" },
+  ];
 
-  // caps 未就绪：先过 HubLauncher（探测 / 引导 / 版本兼容门）
-  if (caps === null) {
-    return <HubLauncher onReady={setCaps} />;
-  }
+  const connected = status?.tts.connected === true;
 
   return (
-    <HubContext.Provider value={{ client: hubClient, caps }}>
+    <>
       <Frame
         pack={PACK}
-        connected={status?.tts.connected ?? false}
+        connected={connected}
         version={status?.tts.version}
         nav={
           <LayerNav
-            items={LAYERS}
+            items={layers}
             active={activeLayer}
             onSelect={(id) => setActiveLayer(id as LayerId)}
           />
@@ -122,30 +127,68 @@ function App() {
             version={PACK.version}
             checks={SIGN_CHECKS}
             procs={SIGN_PROCS}
-            onSign={() => setConfirmOpen(true)}
+            onSign={() => {
+              // SignBlock.onSign 暂为占位（UI-4 总览面接真实会签出厂）；
+              // 当前危险操作入口由 Code 面的「写回游戏」经 useConfirmGate().ask 触发
+            }}
             onDetail={() => {
               /* UI-4 填充 */
             }}
           />
         }
       >
-        {routeElement}
+        {activeLayer === "overview" && <Overview />}
+        {activeLayer === "code" && <Code />}
+        {activeLayer === "agent" && <Agent />}
+        {activeLayer === "cards" && <Cards />}
+        {activeLayer === "assets" && <Assets />}
       </Frame>
 
-      <ConfirmGate
-        open={confirmOpen}
-        title="确认写回游戏（演示）"
-        items={DEMO_CONFIRM_ITEMS}
-        assetWarning="检测到 2 处素材改动未随本次 push 生效"
-        ackLabel="我已知晓上述影响，确认写回"
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={() => {
-          // UI-2 在此接真实 /v1/push confirm:true（hubClient.push(root, true)）
-          setConfirmOpen(false);
-        }}
-      />
-    </HubContext.Provider>
+      {/* 确认门全站唯一实例（红线 1） */}
+      <ConfirmGateHost />
+    </>
   );
 }
 
-export default App;
+/** 确认门宿主：从 ConfirmGateContext 读 request 渲染唯一 <ConfirmGate> */
+function ConfirmGateHost(): JSX.Element | null {
+  const ctx = useContext(ConfirmGateContext);
+  if (ctx === null || ctx.request === null) return null;
+  const { request, cancel, _resolve } = ctx;
+  return (
+    <ConfirmGate
+      open={true}
+      title={request.title}
+      items={request.items}
+      assetWarning={request.assetWarning}
+      ackLabel={request.ackLabel}
+      onConfirm={async () => {
+        // 业务回调成功 → 清空 request（ConfirmGate 随之关闭）；reject 由
+        // ConfirmGate 内部捕获显示错误条，request 保持打开可重试
+        await request.onConfirm();
+        _resolve();
+      }}
+      onCancel={cancel}
+    />
+  );
+}
+
+export default function App(): JSX.Element {
+  const [caps, setCaps] = useState<HubCapabilities | null>(null);
+
+  // caps 未就绪：先过 HubLauncher（探测 / 引导 / 版本兼容门）——
+  // 三层 Provider 都在验证通过后挂载，SSE / 确认门不接触未验证的 hub
+  if (caps === null) {
+    return <HubLauncher onReady={setCaps} />;
+  }
+
+  return (
+    <HubContext.Provider value={{ client: hubClient, caps }}>
+      <ConfirmGateProvider>
+        <SseProvider>
+          <AppInner />
+        </SseProvider>
+      </ConfirmGateProvider>
+    </HubContext.Provider>
+  );
+}

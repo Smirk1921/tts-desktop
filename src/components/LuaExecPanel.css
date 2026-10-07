@@ -1,0 +1,139 @@
+/* <LuaExecPanel> Lua 直执 — Stage A3（代理面右上）
+ * tokens 全引用；等宽输入（数据层）+ 仿宋标注；执行钮 = 蓝（代理活动，§2.5）
+ * 结果区：data-ok="true" → ok（青）/ data-ok="false" → red（红） */
+
+.luapanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-height: 0;
+  color: var(--w);
+}
+
+/* ---- 头部 ---- */
+.luapanel-head {
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.luapanel-title {
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  letter-spacing: 1px;
+  color: var(--w);
+}
+
+/* ---- snippet 快捷入口（小号仿宋） ---- */
+.luapanel-snippets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.luapanel-snippet {
+  padding: 1px var(--sp-2);
+  border: var(--border-w) dashed var(--wdim);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.luapanel-snippet:hover:not(:disabled) {
+  border-style: solid;
+  border-color: var(--w);
+  background: var(--wfaint);
+}
+
+.luapanel-snippet:disabled {
+  border-color: var(--wfaint);
+  color: var(--wdim);
+}
+
+/* ---- Lua 输入（等宽数据层） ---- */
+.luapanel-input {
+  resize: vertical;
+  padding: var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+}
+
+.luapanel-input::placeholder {
+  color: var(--wdim);
+}
+
+.luapanel-input:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.luapanel-input:disabled {
+  border-color: var(--wfaint);
+  color: var(--wdim);
+}
+
+/* ---- 执行钮（代理动作 = 蓝） ---- */
+.luapanel-act {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.luapanel-exec {
+  padding: var(--sp-1) var(--sp-3);
+  border: var(--border-w) solid var(--blue);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--blue);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 1px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.luapanel-exec:hover:not(:disabled) {
+  background: var(--wfaint);
+}
+
+.luapanel-exec:disabled {
+  border-color: var(--wfaint);
+  color: var(--wdim);
+}
+
+/* ---- 结果展示（可滚动） ---- */
+.luapanel-result {
+  max-height: 200px; /* 结果区滚动上限（规格值） */
+  overflow-y: auto;
+  padding: var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+}
+
+.luapanel-result pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.luapanel-result[data-ok="true"] pre {
+  color: var(--ok);
+}
+
+.luapanel-result[data-ok="false"] pre {
+  color: var(--red);
+}

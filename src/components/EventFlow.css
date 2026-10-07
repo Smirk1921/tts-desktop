@@ -1,0 +1,132 @@
+/* <EventFlow> 事件流 — Stage A3（代理面右侧）
+ * tokens 全引用；error 行整行反色（--red 底）；loaded/saved=ok、object=blue（§2.5） */
+
+.eventflow {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bp-d);
+  color: var(--w);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+}
+
+/* ---- 头部：标题 + 存活点 + 清空 ---- */
+.eventflow-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-bottom: var(--border-w) solid var(--w);
+  background: var(--bp-dd);
+}
+
+.eventflow-title {
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  letter-spacing: 1px;
+  color: var(--w);
+}
+
+.eventflow-status {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  color: var(--wdim);
+}
+
+.eventflow-status[data-live="true"] {
+  /* ● 存活 = 青（§2.5） */
+  color: var(--ok);
+}
+
+.eventflow-clear {
+  margin-left: auto;
+  padding: 1px var(--sp-2);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 1px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.eventflow-clear:hover {
+  border-color: var(--w);
+  background: var(--wfaint);
+}
+
+/* ---- 事件体：时间戳 / 类型标 / 消息 ---- */
+.eventflow-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-1) 0;
+}
+
+.r {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  align-items: baseline;
+  padding: calc(var(--sp-1) / 2) var(--sp-2);
+}
+
+.r + .r {
+  border-top: var(--border-w) dashed var(--wfaint);
+}
+
+.ts {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wdim);
+}
+
+.tg {
+  /* 类型标 = 仿宋标注层 */
+  font-family: var(--fs);
+  letter-spacing: 0.5px;
+  color: var(--w);
+}
+
+.m {
+  font-family: var(--mono);
+  color: var(--w);
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---- 类型着色（行级色落至 ts/tg/m 三格） ---- */
+.r[data-type="loaded"] .ts,
+.r[data-type="loaded"] .tg,
+.r[data-type="loaded"] .m,
+.r[data-type="saved"] .ts,
+.r[data-type="saved"] .tg,
+.r[data-type="saved"] .m {
+  /* GameLoaded / GameSaved = 成功存活（§2.5） */
+  color: var(--ok);
+}
+
+.r[data-type="object"] .ts,
+.r[data-type="object"] .tg,
+.r[data-type="object"] .m {
+  /* ObjectCreated = 代理活动（§2.5） */
+  color: var(--blue);
+}
+
+.r[data-type="error"] {
+  /* TTS Error：整行反色（--red 底 + --w 字） */
+  background: var(--red);
+}
+
+.r[data-type="error"] .ts,
+.r[data-type="error"] .tg,
+.r[data-type="error"] .m {
+  color: var(--w);
+}

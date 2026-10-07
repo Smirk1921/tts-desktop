@@ -1,0 +1,84 @@
+/* <CodeFileTree> 代码面·对象区 — Stage A2
+ * 底 bp-dd / hover 微亮 bp-d / 选中反色 blue·bp（§2.5 状态色纪律）
+ * 行高紧凑（VS Code 档位 ≈22px，由字号×行高+间距令牌推得） */
+
+.codetree {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bp-dd);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+}
+
+.codetree-group-title {
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+.codetree-list {
+  margin: 0;
+  padding: 0 var(--sp-1) var(--sp-1);
+  list-style: none;
+}
+
+.codetree-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: calc(var(--fs-data) * var(--lh-data) + var(--sp-1));
+  padding: 0 var(--sp-2);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.codetree-item:hover {
+  background: var(--bp-d);
+}
+
+.codetree-item:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 选中行反色：底 blue · 字 bp */
+.codetree-item[data-active="true"],
+.codetree-item[data-active="true"]:hover {
+  background: var(--blue);
+  color: var(--bp);
+}
+
+/* 状态字符符号（红线 §10：M=琥珀 / +=青 / −=红 / clean 空） */
+.codetree-sym {
+  flex: none;
+  width: 2ch;
+  text-align: center;
+  font-weight: 600;
+}
+
+.codetree-item[data-status="modified"] .codetree-sym { color: var(--amber); }
+.codetree-item[data-status="added"]   .codetree-sym { color: var(--ok); }
+.codetree-item[data-status="deleted"] .codetree-sym { color: var(--red); }
+
+/* 反色行符号随底色统一（保可读性） */
+.codetree-item[data-active="true"] .codetree-sym {
+  color: var(--bp);
+}
+
+/* 文件名：等宽·数据字号（字族由 .codetree 继承） */
+.codetree-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 空分组占位：仿宋·标注 */
+.codetree-empty {
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}

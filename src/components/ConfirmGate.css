@@ -160,6 +160,19 @@
   color: var(--w);
 }
 
+/* 错误条（Stage C：onConfirm reject 时，红实线框） */
+.confirmgate-error {
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--border-w) solid var(--red);
+  border-radius: var(--radius-max);
+  background: var(--bp-dd);
+  color: var(--red);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+  word-break: break-all;
+}
+
 /* 必勾"我已知晓" */
 .confirmgate-chk {
   display: flex;
@@ -231,6 +244,12 @@
 
 .confirmgate-btn.refuse:hover {
   background: var(--wfaint);
+}
+
+.confirmgate-btn.refuse:disabled {
+  color: var(--wdim);
+  border-color: var(--wdim);
+  cursor: not-allowed;
 }
 
 .confirmgate-btn.sign {
