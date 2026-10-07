@@ -1,0 +1,92 @@
+/* <CardFacePreview> 卡牌面·卡面预览 — UI-3 Stage A2
+ * 右下预览小面板：状态行（空/加载/错误）+ 图（等比 contain）+ 元信息行。
+ * 颜色全部引用令牌（tokens.css）：加载=blue（进行中）、错误=red（§2.5 纪律）。
+ * 容器高度 280px 为任务书规格（组件局部几何值，非全局令牌）。 */
+
+.cardface {
+  display: flex;
+  flex-direction: column;
+  height: 280px;
+  min-width: 0;
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wdim);
+  overflow: hidden;
+}
+
+/* 图区：居中等比缩放 */
+.cardface-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-2);
+}
+
+.cardface-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ---- 状态行 ---- */
+
+.cardface-empty {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  letter-spacing: 1px;
+}
+
+.cardface-loading {
+  font-family: var(--mono);
+  font-size: var(--fs-note);
+  line-height: var(--lh-data);
+  color: var(--blue); /* 蓝=进行中（§2.5） */
+}
+
+.cardface-error {
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--sp-2);
+  font-family: var(--mono);
+  font-size: var(--fs-note);
+  line-height: var(--lh-data);
+  color: var(--red); /* 红=错误（§2.5） */
+  word-break: break-all;
+}
+
+/* ---- 元信息行：卡名 + 本地路径 + 体积 ---- */
+
+.cardface-meta {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-top: var(--border-w) dashed var(--wfaint);
+  font-family: var(--mono);
+  font-size: var(--fs-note);
+  line-height: var(--lh-data);
+}
+
+.cardface-meta-name {
+  flex: none;
+  color: var(--w);
+}
+
+.cardface-meta-path {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--wdim);
+}
+
+.cardface-meta-size {
+  flex: none;
+  margin-left: auto;
+  color: var(--wdim);
+}

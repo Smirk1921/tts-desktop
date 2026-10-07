@@ -1,0 +1,44 @@
+/* <CardBackPreview> Cards 面·对象区（下·卡背预览） — Stage A1（UI-3）
+ * 容器高度 200px 为任务书指定（~200px 档位，先例：Code.css 栅格 220px/260px）；
+ * 边框双线沿用 Frame.css 图框语言：border --w + 内缩一道 outline --wdim；
+ * 卡背图等比缩放至容器宽度（width 100% + height auto，object-fit 只裁不变形）。 */
+
+.cardback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  margin: 0;
+  padding: var(--sp-2);
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--w);
+  /* 内缩一道 --wdim 线 = 双线图框（Frame.css 同款） */
+  outline: var(--border-w) solid var(--wdim);
+  outline-offset: -6px;
+  border-radius: var(--radius-max);
+  overflow: hidden;
+}
+
+/* 卡背图：等比缩放到容器宽度 */
+.cardback-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-max);
+}
+
+/* 占位提示（未选中 / 加载中 / 无数据）：仿宋·标注 */
+.cardback-hint {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+/* 错误提示：✗ + 红色（§2.5 错误色） */
+.cardback-error {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--red);
+}

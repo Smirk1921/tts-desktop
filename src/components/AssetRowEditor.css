@@ -1,0 +1,27 @@
+/* <AssetRowEditor> 素材台账·URL 行内编辑器 — UI-3 Stage A3
+ * 与父组件 AssetsTable 共用样式基调：行高取 AssetsTable.tsx ROW_HEIGHT 注入的
+ * --assetstable-rowh（此处为独立使用留 28px 回退），字号字族继承表格数据层。 */
+
+.assetroweditor-input {
+  display: block;
+  width: 100%;
+  height: var(--assetstable-rowh, 28px);
+  padding: 0 var(--sp-1);
+  border: var(--border-w) solid var(--blue);
+  border-radius: var(--radius-max);
+  background: var(--bp);
+  color: var(--w);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  min-width: 0;
+}
+
+.assetroweditor-input:focus {
+  outline: none; /* 焦点态已由蓝边框表达，不再叠 outline */
+}
+
+.assetroweditor-input::selection {
+  background: var(--blue);
+  color: var(--bp);
+}
