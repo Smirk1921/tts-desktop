@@ -1,0 +1,80 @@
+/* <DeckList> Cards 面·对象区（左列表） — Stage A1（UI-3）
+ * 样式对齐 CodeFileTree.css：底 bp-dd / hover 微亮 bp-d / 选中反色 blue·bp（§2.5）
+ * 行高紧凑（VS Code 档位 ≈22px，由字号×行高+间距令牌推得） */
+
+.decklist {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bp-dd);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+}
+
+.decklist-group-title {
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+.decklist-list {
+  margin: 0;
+  padding: 0 var(--sp-1) var(--sp-1);
+  list-style: none;
+}
+
+.decklist-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: calc(var(--fs-data) * var(--lh-data) + var(--sp-1));
+  padding: 0 var(--sp-2);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.decklist-item:hover {
+  background: var(--bp-d);
+}
+
+.decklist-item:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 选中行反色：底 blue · 字 bp */
+.decklist-item[data-active="true"],
+.decklist-item[data-active="true"]:hover {
+  background: var(--blue);
+  color: var(--bp);
+}
+
+/* 牌堆名：等宽·数据字号（字族由 .decklist 继承） */
+.decklist-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 卡数：右对齐·表格化数字（有值才渲染） */
+.decklist-count {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+/* 反色行卡数随底色统一（保可读性） */
+.decklist-item[data-active="true"] .decklist-count {
+  color: var(--bp);
+}
+
+/* 空列表占位：仿宋·标注 */
+.decklist-empty {
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}

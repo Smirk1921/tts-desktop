@@ -1,0 +1,88 @@
+/* <AssetsGroupNav> ④素材面·对象区（类型分组导航） — UI-3 Stage A3
+ * 底 bp-dd / hover 微亮 bp-d / 选中反色 blue·bp（同 CodeFileTree §2.5 纪律）
+ * 行高与 codetree-item 同档（字号×行高+间距令牌推得），键盘焦点 outline 可见。 */
+
+.assetsgroupnav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  height: 100%;
+  padding: var(--sp-1);
+  overflow-y: auto;
+  background: var(--bp-dd);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+}
+
+.assetsgroupnav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: calc(var(--fs-data) * var(--lh-data) + var(--sp-1));
+  padding: 0 var(--sp-2);
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.assetsgroupnav-item:hover {
+  background: var(--bp-d);
+}
+
+.assetsgroupnav-item:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 选中行反色：底 blue · 字 bp（保符号可读性一并反色） */
+.assetsgroupnav-item[data-active="true"],
+.assetsgroupnav-item[data-active="true"]:hover {
+  background: var(--blue);
+  color: var(--bp);
+}
+
+/* 组名：占满剩余宽，等宽截断 */
+.assetsgroupnav-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 死链数：红字（✗ 死链，红线 §10）；选中反色时仍保红（红蓝对比可读） */
+.assetsgroupnav-dead {
+  flex: none;
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* 脏行蓝点（● 已改未提交语义族）；选中行底为蓝 → 点改用底色字 */
+.assetsgroupnav-dirty {
+  flex: none;
+  color: var(--blue);
+  font-size: var(--fs-note);
+  line-height: 1;
+}
+
+.assetsgroupnav-item[data-active="true"] .assetsgroupnav-dirty {
+  color: var(--bp);
+}
+
+/* 计数：数字表格化，弱化色 */
+.assetsgroupnav-total {
+  flex: none;
+  min-width: 3ch;
+  text-align: right;
+  color: var(--wdim);
+}
+
+.assetsgroupnav-item[data-active="true"] .assetsgroupnav-total {
+  color: var(--bp);
+}

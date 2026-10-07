@@ -1,0 +1,248 @@
+/* ============================================================================
+ * <ImportPreviewDialog> 导入预览对话框 — UI-3 Stage B2
+ * 模态遮罩 + 居中对话框（ConfirmGate 同款骨架）：
+ *   z-index 90 < 确认门 100——会签时确认门叠于本框之上；
+ *   遮罩 --dur-fast 淡入，对话框 --ease-pop + --dur-pop 生长；
+ *   色板 / 字族 / 字号 / 间距全部经 tokens.css 变量，不写死色值。
+ * ==========================================================================*/
+
+.importpreview {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 遮罩（确认导入等待期不可点，防误关丢结果） */
+.importpreview-mask {
+  position: absolute;
+  inset: 0;
+  background: var(--mask);
+  animation: importpreview-mask-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes importpreview-mask-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 对话框：amber 边框（状态色纪律 §2.5：amber = 等待人审；写操作的红色会签
+ * 交给叠加其上的 ConfirmGate，本框只做预览交接） */
+.importpreview-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 640px;
+  max-width: calc(100vw - var(--sp-6) * 2);
+  max-height: calc(100vh - var(--sp-6) * 2);
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--amber);
+  border-radius: var(--radius-max);
+  padding: var(--sp-4);
+  color: var(--w);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  animation: importpreview-pop var(--dur-pop) var(--ease-pop) both;
+}
+
+@keyframes importpreview-pop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 标题：amber 方框标（同 ConfirmGate 红色方框标的预告位） */
+.importpreview-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.importpreview-marker {
+  width: 12px;
+  height: 12px;
+  background: var(--amber);
+  border-radius: var(--radius-max);
+  flex-shrink: 0;
+}
+
+.importpreview-title {
+  margin: 0;
+  font-family: var(--fs);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--w);
+  letter-spacing: 1px;
+}
+
+/* root / manifest 调用参数（等宽 = 数据） */
+.importpreview-meta {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  color: var(--wdim);
+  margin-bottom: var(--sp-2);
+  word-break: break-all;
+}
+
+.importpreview-summary {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--w);
+  margin-bottom: var(--sp-2);
+}
+
+/* 警告清单（非致命提示，amber 虚线框，同 ConfirmGate .warn 骨架） */
+.importpreview-warn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border: var(--border-w) dashed var(--amber);
+  border-radius: var(--radius-max);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  color: var(--amber);
+}
+
+.importpreview-warn-line {
+  word-break: break-all;
+}
+
+/* 文件清单（等宽 = 数据；组头仿宋 = 标注） */
+.importpreview-list {
+  flex: 1;
+  min-height: 120px;
+  max-height: 300px;
+  overflow: auto;
+  margin: 0 0 var(--sp-2) 0;
+  padding: var(--sp-2) var(--sp-3);
+  list-style: none;
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+}
+
+.importpreview-group {
+  margin-bottom: var(--sp-2);
+}
+
+.importpreview-group:last-child {
+  margin-bottom: 0;
+}
+
+.importpreview-group-head {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  margin-bottom: var(--sp-1);
+}
+
+.importpreview-file {
+  color: var(--w);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.importpreview-empty {
+  color: var(--wdim);
+}
+
+/* 大小说明（hub 契约无文件大小，如实注明） */
+.importpreview-sizenote {
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  color: var(--wdim);
+  margin-bottom: var(--sp-3);
+}
+
+/* dry-run 进行中 */
+.importpreview-loading {
+  padding: var(--sp-4);
+  text-align: center;
+  font-family: var(--sans);
+  font-size: var(--fs-panel);
+  color: var(--wdim);
+}
+
+/* 错误条（dry-run 失败 / 确认导入 reject，红实线框） */
+.importpreview-error {
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--border-w) solid var(--red);
+  border-radius: var(--radius-max);
+  background: var(--bp-dd);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+  color: var(--red);
+  word-break: break-all;
+}
+
+/* 三按钮：取消 / 重新跑 dry-run / 确认导入（amber 主动作） */
+.importpreview-act {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}
+
+.importpreview-btn {
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.importpreview-btn:hover:enabled {
+  background: var(--wfaint);
+}
+
+.importpreview-btn:disabled {
+  color: var(--wdim);
+  border-color: var(--wdim);
+  cursor: not-allowed;
+}
+
+.importpreview-btn-primary {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--bp);
+  font-weight: 600;
+}
+
+.importpreview-btn-primary:hover:enabled {
+  background: var(--amber);
+  color: var(--bp);
+  filter: brightness(1.1);
+}
+
+.importpreview-btn-primary:disabled {
+  background: transparent;
+  color: var(--wdim);
+  border-color: var(--wdim);
+}

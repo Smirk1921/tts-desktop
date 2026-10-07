@@ -1,0 +1,293 @@
+/* ============================================================================
+ * ③ 卡牌面路由样式 — Stage B1（UI-3）
+ * 三区骨架（round-03 §3.1）：.cards-obj 对象区（牌堆列表+卡背预览）/
+ * .cards-work 工作区（切片网格+卡面预览）/ .cards-param 参数标注区。
+ * 色板 / 字族 / 字号 / 间距全部经 tokens.css 变量引用，不写死色值；
+ * 栅格列宽（220px / 280px）对齐 Code.css 先例（右侧 +20px：容纳三行路径
+ * 输入与 dry-run <pre>）；仅 sheetzone 封顶宽与 <pre> 高为局部几何值。
+ * ==========================================================================*/
+
+.cards-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 280px;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-2);
+  min-height: 0;
+}
+
+/* ---- 对象区（左）：上牌堆列表 + 下卡背预览 ---- */
+.cards-obj {
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--wfaint);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.cards-obj-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cards-obj-back {
+  flex: none;
+  padding: var(--sp-2);
+  border-top: var(--border-w) solid var(--wfaint);
+}
+
+.cards-obj-backlabel {
+  margin-bottom: var(--sp-1);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  letter-spacing: 2px;
+}
+
+/* ---- 工作区（中）：上切片网格 + 下卡面预览 ---- */
+.cards-work {
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 网格容器：居中 + 越界滚动；sheetzone 宽度封顶 480px（10×7 网格在常规视口
+ * 内基本整屏可见，更高图集经滚动查看——局部几何值，非全局令牌） */
+.cards-sheetwrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: var(--sp-3);
+}
+
+.cards-sheetwrap .sheetzone {
+  flex: none;
+  width: min(100%, 480px);
+}
+
+/* CardFacePreview 定高 280px（组件自带），在 flex 列内固定于底部 */
+.cards-work > .cardface {
+  flex: none;
+}
+
+/* 空态 / 提示（工作区中央）：黑体=说明文字（同 Code.css 语言） */
+.cards-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  text-align: center;
+  color: var(--wdim);
+  font-family: var(--sans);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+}
+
+.cards-empty-error {
+  color: var(--red);
+}
+
+.cards-empty-amber {
+  color: var(--amber);
+}
+
+/* ---- 参数标注区（右）：仿宋标注 + 等宽数据 ---- */
+.cards-param {
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--wfaint);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.cards-param-title {
+  color: var(--wdim);
+  letter-spacing: 2px;
+  border-bottom: var(--border-w) solid var(--wfaint);
+  padding-bottom: var(--sp-1);
+}
+
+.cards-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.cards-meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.cards-meta dt {
+  color: var(--wdim);
+  flex: none;
+}
+
+.cards-meta dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cards-meta dd[data-tone="ok"] {
+  color: var(--ok);
+}
+
+.cards-meta dd[data-tone="red"] {
+  color: var(--red);
+}
+
+/* 切片回填等过程注记：等宽（数据层），✓/文案随内容 */
+.cards-note {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--wdim);
+  word-break: break-all;
+}
+
+/* 死链警示条：红框红字（§2.5 红=死链；跨面联动提示去 ④ 素材面） */
+.cards-deadwarn {
+  border: var(--border-w) solid var(--red);
+  color: var(--red);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+}
+
+/* 操作错误行：红=错误（§2.5，同 Code.css .code-error） */
+.cards-error {
+  border: var(--border-w) solid var(--red);
+  color: var(--red);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  word-break: break-all;
+}
+
+/* ---- 参数输入组：路径 / 替换规则 ---- */
+.cards-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.cards-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.cards-fieldlabel {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+.cards-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--sp-1);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+}
+
+.cards-input::placeholder {
+  color: var(--wfaint);
+}
+
+.cards-input:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* ---- 操作按钮：切片=写本地文件（红边危险），替换预览=只读 dry-run ---- */
+.cards-acts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.cards-btn {
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  cursor: pointer;
+}
+
+.cards-btn:hover:enabled {
+  border-color: var(--w);
+}
+
+.cards-btn-danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.cards-btn-danger:hover:enabled {
+  background: var(--red);
+  color: var(--w);
+}
+
+.cards-btn:disabled {
+  background: transparent;
+  border-color: var(--wfaint);
+  color: var(--wdim);
+  cursor: not-allowed;
+}
+
+/* 替换计划 dry-run 结果：只读 <pre>（等宽·数据层，越界滚动） */
+.cards-plan {
+  margin: 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  color: var(--wdim);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cards-param-note {
+  color: var(--wdim);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+}

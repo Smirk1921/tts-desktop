@@ -1,0 +1,118 @@
+/* <SliceGrid> 卡牌面·切片网格 — UI-3 Stage A2
+ * round-03 §4.9 + 交互小样 a-deep.html：sheetzone 网格线减淡（gap 透出 --wfaint）
+ * / cellcard hover 微亮 bp-d·sel 蓝框 / dead 右上 ✗ 红点 / cellghost 虚线占位 /
+ * ghost-note 右下脚注。颜色全部引用令牌（tokens.css），不写死色值。
+ * 网格规格（cols/rows）与图集比例（w/h）为运行时数据，经 --sz-cols/--sz-rows
+ * 与 aspect-ratio 内联注入。 */
+
+.sheetzone {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--sz-cols), 1fr);
+  grid-template-rows: repeat(var(--sz-rows), 1fr);
+  /* 网格线减淡：gap 露出底色当线，格底色盖住其余（§2.4 分组线 --wfaint） */
+  gap: var(--border-w);
+  padding: var(--border-w);
+  background: var(--wfaint);
+  border: var(--border-w) solid var(--wdim);
+}
+
+/* ---- 真实牌面格：点击选中（sel 蓝框） ---- */
+
+.cellcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bp-dd);
+  color: var(--w);
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.cellcard:hover {
+  background: var(--bp-d);
+}
+
+.cellcard:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 选中：内嵌蓝框（§2.5 蓝=选中，参照小样 .sel box-shadow inset） */
+.cellcard[data-sel="true"] {
+  background: var(--bp-d);
+  box-shadow: inset 0 0 0 var(--border-w) var(--blue);
+}
+
+.cellcard[data-sel="true"] .cellcard-idx {
+  opacity: 1;
+}
+
+/* 死链：右上 ✗ 红点（--red 唯一语义=错误/死链，✗ 已注册 LegendBar） */
+.cellcard[data-dead="true"]::after {
+  content: "✗";
+  position: absolute;
+  top: 0;
+  right: var(--sp-1);
+  color: var(--red);
+  font-size: var(--fs-note);
+  font-weight: 600;
+  line-height: var(--lh-data);
+}
+
+/* 格内内容：序号（数据层·等宽）+ 卡名（小号·弱色） */
+.cellcard-idx {
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.cellcard-name {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-note);
+  line-height: var(--lh-data);
+  color: var(--wdim);
+}
+
+/* 未切片（filled 未含）：内容减淡提示（不用新符号，避免图例未注册） */
+.cellcard[data-filled="false"] .cellcard-idx,
+.cellcard[data-filled="false"] .cellcard-name {
+  opacity: 0.5;
+}
+
+/* ---- 虚线占位格：未排牌，不响应交互 ---- */
+
+.cellghost {
+  min-width: 0;
+  min-height: 0;
+  background: var(--bp-dd);
+  border: var(--border-w) dashed var(--wfaint);
+  pointer-events: none;
+}
+
+/* ---- 右下脚注：已排 / 总格数 ---- */
+
+.ghost-note {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-2);
+  z-index: 3;
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -1,0 +1,176 @@
+/* <AssetsTable> ④素材面·素材台账表格 — UI-3 Stage A3
+ * 行高固定 28px：--assetstable-rowh 由 AssetsTable.tsx 的 ROW_HEIGHT 常量
+ * 在根节点注入（虚拟化 estimateSize 与 CSS 共用单一事实源，勿在别处写 28px）。
+ * 列宽用 ch/fr（等宽数据字号），不写死 px；dead/checking 左条复用 --next-bar 宽。
+ * 状态色纪律 §2.5：dead=红 / checking=琥珀 / dirty=蓝点 / ok=青绿。 */
+
+.assetstable {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bp-dd);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+}
+
+/* 滚动容器：虚拟化时是 useVirtualizer 的 scrollElement（ref 挂载点） */
+.assetstable-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 表格本体改 grid 布局（tanstack 虚拟表范式）：thead 吸顶 / tbody 作定位画布 */
+.assetstable-table {
+  display: grid;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.assetstable-thead {
+  display: grid;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bp-d);
+}
+
+.assetstable-tbody {
+  display: grid;
+  position: relative;
+}
+
+/* 表头行与数据行共用列模板（ch 随 --fs-data 等宽字号伸缩） */
+.assetstable-head-row,
+.assetstable-row {
+  display: grid;
+  grid-template-columns:
+    5ch
+    8ch
+    minmax(14ch, 1.2fr)
+    minmax(26ch, 3fr)
+    12ch
+    minmax(18ch, 1.8fr);
+  column-gap: var(--sp-2);
+  align-items: center;
+}
+
+/* 表头：仿宋·标注层 */
+.assetstable-head-row {
+  height: calc(var(--fs-data) * var(--lh-data) + var(--sp-2));
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.assetstable-head-cell {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  font-weight: normal;
+  color: var(--wdim);
+  text-align: left;
+}
+
+/* 数据行：固定 28px + 底部网格线 */
+.assetstable-row {
+  position: relative;
+  height: var(--assetstable-rowh);
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+/* 虚拟化行：绝对定位到 tbody 画布（transform 偏移由行内样式给出） */
+.assetstable-row[data-virtual="true"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-bottom: none; /* 网格线改由 ::after 画在行底，随 transform 平移 */
+}
+
+.assetstable-row[data-virtual="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--border-w);
+  background: var(--wfaint);
+  pointer-events: none;
+}
+
+/* 行状态着色：dead 红边 / checking 琥珀边（复用 --next-bar 条宽，box-shadow 不挤行高） */
+.assetstable-row[data-status="dead"] {
+  box-shadow: inset var(--next-bar) 0 0 var(--red);
+}
+
+.assetstable-row[data-status="checking"] {
+  box-shadow: inset var(--next-bar) 0 0 var(--amber);
+}
+
+/* dirty 蓝点右上（● 已注册：M● 已改未提交语义族） */
+.assetstable-row[data-dirty="true"]::after {
+  content: "●";
+  position: absolute;
+  top: 0;
+  right: var(--sp-1);
+  color: var(--blue);
+  font-size: var(--fs-note);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* 单元格：等宽截断（grid 子项须 min-width:0 才能收缩省略） */
+.assetstable-cell {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 var(--sp-2);
+}
+
+/* 状态符号（列内容不再截断符号本身） */
+.assetstable-status {
+  display: inline-block;
+  width: 2ch;
+  text-align: center;
+  font-weight: 600;
+}
+
+.assetstable-status-unknown  { color: var(--wdim); }
+.assetstable-status-ok       { color: var(--ok); }
+.assetstable-status-dead     { color: var(--red); }
+.assetstable-status-checking { color: var(--amber); }
+
+/* URL 列：可点击进入行内编辑（链接蓝，hover 下划线提示可点） */
+.assetstable-url {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--blue);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.assetstable-url:hover {
+  text-decoration: underline;
+}
+
+.assetstable-url:focus-visible {
+  outline: var(--border-w) solid var(--blue);
+  outline-offset: calc(var(--border-w) * -1);
+}
+
+/* 空态：仿宋·标注 */
+.assetstable-empty {
+  padding: var(--sp-3) var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}

@@ -1,0 +1,268 @@
+/* ============================================================================
+ * ④ 素材面路由样式 — Stage B2（UI-3）
+ * 三区骨架（round-03 §3.1）：.assets-obj 对象区 / .assets-work 工作区 / .assets-param 参数标注区。
+ * 栅格列宽（220px / 260px）与 ①代码面 Code.css 同档；色板 / 字族 / 字号 / 间距
+ * 全部经 tokens.css 变量引用，不写死色值（红线 §2.3）。
+ * 状态色纪律 §2.5：冲突/错误=红、mock/只读提示=琥珀（待人审）、计数强调随语义。
+ * ==========================================================================*/
+
+.assets-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-2);
+  min-height: 0;
+}
+
+/* ---- 对象区（左）：类型分组导航 ---- */
+.assets-obj {
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--wfaint);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ---- 工作区（中）：409 冲突条 + 台账表格 ---- */
+.assets-work {
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 表格容器：撑满冲突条以下的剩余高度 */
+.assets-tablewrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* AssetsTable 的 height prop 只收 px（Stage A 固定），路由侧覆写为撑满——
+ * 样式表 !important 覆盖行内高度，同 Code.css 对 CodeEditor 的覆写范式；
+ * AssetsTable 内部 .assetstable-scroll 为 flex:1 + useVirtualizer 自测量，适配无碍 */
+.assets-tablewrap > .assetstable {
+  flex: 1;
+  height: auto !important;
+  min-height: 0;
+}
+
+/* 空态 / 提示（工作区中央）：黑体=说明文字 */
+.assets-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  text-align: center;
+  color: var(--wdim);
+  font-family: var(--sans);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+}
+
+.assets-empty-error {
+  color: var(--red);
+}
+
+/* ---- 409 冲突条：红=错误（状态色纪律 §2.5，同 Code.css .code-conflict） ---- */
+.assets-conflict {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--red);
+  color: var(--w);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+}
+
+.assets-conflict-sym {
+  font-family: var(--mono);
+}
+
+.assets-conflict-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.assets-conflict button {
+  background: transparent;
+  border: var(--border-w) solid var(--w);
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  padding: 0 var(--sp-2);
+  cursor: pointer;
+}
+
+.assets-conflict button:hover {
+  background: var(--w);
+  color: var(--red);
+}
+
+/* ---- 参数标注区（右）：仿宋标注 + 等宽数据 ---- */
+.assets-param {
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--wfaint);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.assets-param-title {
+  color: var(--wdim);
+  letter-spacing: 2px;
+  border-bottom: var(--border-w) solid var(--wfaint);
+  padding-bottom: var(--sp-1);
+}
+
+.assets-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.assets-meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.assets-meta dt {
+  color: var(--wdim);
+  flex: none;
+}
+
+.assets-meta dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assets-meta dd[data-tone="ok"] {
+  color: var(--ok);
+}
+
+.assets-meta dd[data-tone="amber"] {
+  color: var(--amber);
+}
+
+.assets-meta dd[data-tone="red"] {
+  color: var(--red);
+}
+
+/* mock / 只读视图提示：琥珀虚线框（状态色纪律 §2.5：amber = 等待人审） */
+.assets-mock {
+  border: var(--border-w) dashed var(--amber);
+  color: var(--amber);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+}
+
+/* 错误行：红实线框 */
+.assets-error {
+  border: var(--border-w) solid var(--red);
+  color: var(--red);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  word-break: break-all;
+}
+
+/* 最近一次操作结果（保存 / 体检 / 导入摘要）：等宽弱化 */
+.assets-status {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--wdim);
+  word-break: break-all;
+}
+
+/* 导入清单路径输入 */
+.assets-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.assets-field-label {
+  color: var(--wdim);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+}
+
+.assets-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+}
+
+.assets-input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+/* 操作按钮组：置底；体检 / 导入 / 保存均为常规（危险动作只有导入真写入，
+ * 由全站唯一 ConfirmGate 承担红色语义） */
+.assets-acts {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.assets-btn {
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-panel);
+  cursor: pointer;
+}
+
+.assets-btn:hover:enabled {
+  border-color: var(--w);
+}
+
+.assets-btn:disabled {
+  background: transparent;
+  border-color: var(--wfaint);
+  color: var(--wdim);
+  cursor: not-allowed;
+}
+
+.assets-param-note {
+  color: var(--wdim);
+  font-family: var(--sans);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+}
