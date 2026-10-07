@@ -2,55 +2,58 @@
 
 > TTS 图包工作台 — 蓝图纸语言桌面应用
 >
-> Round-03 设计方案（[ui-design/round-03](https://github.com/Smirk1921/tts-toolkit)）的 Tauri 2 + React 18 实现。
-> v0.8.0 窗口 UI-1a：基座 + tokens.css + 5 骨架组件静态渲染。
+> Round-03 设计方案（[ui-design/round-03](https://github.com/Smirk1921/tts-toolkit)）的 Tauri 2 + React 19 实现。
+> v0.8.0 窗口 UI-4：⓪总览 + 动效三件套 + 应用图标 + Tauri 打包完工。
 
 ## 前置依赖
 
 | 依赖 | 版本 | 说明 |
 |---|---|---|
 | Windows | **10 1809+ / 11** | 仅 Windows（v0.1.0 不做跨平台） |
-| WebView2 Runtime | 任意 | Win10 1809+ 自带；缺失时启动钩子会在 stderr 警告，[点此下载](https://go.microsoft.com/fwlink/p/?LinkId=2124703) |
+| WebView2 Runtime | 任意 | Win10 1809+ 自带；缺失时 HubLauncher 引导面板顶部红条提示 + 一键下载 |
+| tts-toolkit (CLI) | **≥ 0.7.0** | 桌面应用经 `tts-hub` 与 TTS 通信；0.7.x 为降级模式（无 /v1/files 读写），0.8.0 解锁全功能 |
+| Tabletop Simulator | 任意 Steam 版 | 联通功能需要；UI 空骨架可独立浏览 |
 | Node.js | **24+** | 仅开发期需要 |
 | Rust | **1.99+** (stable-msvc) | 仅开发期需要；`rustup` 安装 |
 | VS Build Tools 2022 | C++ 工作负载 | 仅开发期需要；含 MSVC + Windows SDK |
-| tts-toolkit (CLI) | ≥ 0.7.0 | **本窗口 (UI-1a) 不需要**；UI-1b 起需要开发期手动起 `tts-hub` |
-| Tabletop Simulator | 任意 Steam 版 | **本窗口不需要**；UI-1b 联通验收时需要 |
+
+## 快速开始（用户）
+
+1. `npm install -g @smirk1921/tts-toolkit`（一次）
+2. 在图包工作区目录起一个终端跑 `tts-hub`（保持窗口开启）
+3. 运行安装包 `tts-desktop_0.1.0_x64-setup.exe`（或开发期 `npm run tauri dev`）
+4. 应用检测到 39995 端口的 hub → 进入五面工作台；未检测到 → 引导面板（一键复制安装/启动命令）
 
 ## 快速开始（开发）
 
 ```bash
-# 1. 装依赖
 npm install
+npm run tauri dev        # 首次 cargo build 5-10 min
+npm run dev              # 浏览器调试（不开 Tauri 壳，HubLauncher 走 HTTP 探测降级）
 
-# 2. 起 Tauri dev（首次 cargo build 5-10 min）
-npm run tauri dev
-
-# 浏览器调试（不开 Tauri 壳，UI-1a 阶段可选）
-npm run dev
+npm run build            # tsc + vite build
+npm run tauri build      # 出 NSIS 安装包（src-tauri/target/release/bundle/nsis/）
+npm run make-icons       # 从 assets-src/icon.svg 重生成 src-tauri/icons/ 全套
+npm run compare-screenshots  # 五面截图 vs round-03 基准 pixelmatch 比对（需先截图入 screenshots/current/）
 ```
 
-## 当前状态：UI-1a 骨架
+## 当前状态：v0.1.0 候选（UI-4 完工）
 
-完工交付物：
+五面全部落地：
 
-- [x] Tauri 2 + React 18 + TypeScript + Vite 骨架
-- [x] `src/tokens.css` — round-03 §2 设计令牌（10 色彩 + 3 字体 + 4 字号 + 6 间距 + 6 动效 + 几何约束）
-- [x] 5 骨架组件静态渲染：
-  - `<Frame>` 双线图框 + 图名栏 + 42px 网格底纹 + 状态行
-  - `<LayerNav>` 5 面切换（⓪①②③④ + 状态圆点）
-  - `<LegendBar>` 6 组全局图例
-  - `<SignBlock>` 右下会签栏（交付清单 / 出厂工序 / 操作）
-  - `<ConfirmGate>` 确认门（危险操作唯一组件，右下生长动效）
-- [x] 5 路由占位（UI-2/3/4 填充真实内容）
-- [x] WebView2 启动检测钩子（`src-tauri/src/lib.rs` setup hook）
+- **⓪ 总览**：工序章五章横排（拉取→切片→拼版→校样→出厂，四态色）+ 待办清单 + 迷你文件树 + 事件流 + 四面状态磁贴，首进阶梯动效
+- **① 代码**：pull → 条目级 diff（红绿块）→ CodeMirror 编辑（Lua/XML 高亮）→ 乐观锁保存（409 冲突条）→ 确认门写回游戏
+- **② 代理**：Lua 直执 + 作业流水（hub 路由调用行）+ SSE 事件流（Error 整行红）
+- **③ 卡牌**：牌堆列表 + 切片网格（14 真实格 + 虚线占位）+ 卡面预览 + 死链卡牌切片禁用
+- **④ 素材**：台账表格（>500 行强制虚拟化，3500 行实测 renderedRows=41）+ 行内编辑 + 批量体检死链标红 + 导入预览
 
-不在本窗口（后续窗口交付）：
+顶层机制：
 
-- `src/hub/`（HubClient + SSE） — **UI-1b**
-- ①代码 / ②代理 — **UI-2**
-- ③卡牌 / ④素材 — **UI-3**
-- ⓪总览 + 动效三件套 + 应用图标 + 打包 — **UI-4**
+- 五层 Provider：HubContext → ConfirmGate → Sse → DeadLink → Dirty
+- `<ConfirmGate>` 全站唯一危险确认组件（确认门生长动效 + 勾选"我已知晓"）
+- 跨面联动：④ 体检死链 → ③ 切片禁用；① 脏文件 → LayerNav ①蓝点；死链/差异 → ⓪红点
+- hub 版本兼容：0.7.x 降级提示 / 0.8.0 全功能（`capabilitiesFromStatus`）
+- 设计令牌：`src/tokens.css`（10 色彩 + 3 字体 + 4 字号 + 6 间距 + 6 动效 + 几何约束），全站引用无写死值
 
 ## 设计红线（round-03 §10）
 

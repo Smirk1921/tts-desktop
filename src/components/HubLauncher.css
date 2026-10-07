@@ -71,6 +71,37 @@
   letter-spacing: 1px;
 }
 
+/* WebView2 运行时缺失红条（UI-4 Stage B2）：红 = 危险/错误（§2.5），
+   左侧粗红条 + 1px 红框，文字走图线白保持可读性；直角、零投影 */
+.hublauncher-wv2 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--red);
+  border-left: var(--next-bar) solid var(--red);
+  border-radius: var(--radius-max);
+}
+
+.hublauncher-wv2-mark {
+  flex-shrink: 0;
+  color: var(--red);
+  font-family: var(--sans);
+  font-size: var(--fs-panel);
+  line-height: var(--lh-body);
+}
+
+.hublauncher-wv2-text {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  color: var(--w);
+}
+
 /* 步骤：仿宋标注 + 等宽命令行 */
 .hublauncher-step {
   margin-bottom: var(--sp-3);
@@ -147,4 +178,10 @@
 
 .hublauncher-btn:hover:not(:disabled) {
   background: var(--wfaint);
+}
+
+/* 紧凑按钮（红条内联用；须置于 .hublauncher-btn 之后以覆盖 padding） */
+.hublauncher-btn--sm {
+  flex-shrink: 0;
+  padding: var(--sp-1) var(--sp-3);
 }

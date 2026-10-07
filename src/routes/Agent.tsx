@@ -23,6 +23,7 @@ import type { ReactElement } from "react";
 import JobSheet from "../components/JobSheet";
 import LuaExecPanel from "../components/LuaExecPanel";
 import EventFlow from "../components/EventFlow";
+import { RouteSlide } from "../components/RouteSlide";
 import { useSseEvents } from "../hub/useSseEvents";
 import { useJobTracker } from "../hub/useJobTracker";
 import { useHub } from "../hub/HubContext";
@@ -74,7 +75,7 @@ export default function Agent(): ReactElement {
   };
 
   return (
-    <div className="route-slide">
+    <RouteSlide>
       <div className="agent-layout">
         {/* 工作区：作业流水 */}
         <main className="agent-work" aria-label="作业流水">
@@ -94,6 +95,6 @@ export default function Agent(): ReactElement {
           <EventFlow events={events} live={state === "open"} onClear={clear} />
         </aside>
       </div>
-    </div>
+    </RouteSlide>
   );
 }

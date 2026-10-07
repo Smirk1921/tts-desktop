@@ -1,0 +1,72 @@
+# ci.yml — tts-desktop PR 门禁：前端 build + cargo check（UI-4 Stage B3）
+#
+# 三条故意约束（不要"修"掉）：
+# 1) 只跑 `npm run build`（tsc + vite build），**不跑 `cargo build`**：
+#    Tauri 全量构建在 windows-latest 上首次 15~25min，PR 门禁扛不住；
+#    Rust 侧只做 `cargo check`（类型/借用/配置校验），真正出安装包留给 release
+#    （Stage C 本地 `npm run tauri build`）。
+# 2) **顺序：cargo check 排在 npm run build 之后**。
+#    实测（本机，2026-10-08）：清掉 tts-desktop 的 cargo fingerprint 后，即使
+#    src-tauri/../dist 不存在，`cargo check` 仍 exit 0 —— check 不做前端资源嵌入，
+#    所以这条顺序**不是**硬依赖；保持它是因为 (a) 前端 tsc 失败应当先报（秒级 vs 分钟级），
+#    (b) tauri.conf.json 的 build.frontendDist = "../dist"，将来若把 check 换成
+#    `cargo build`/`tauri build`，dist/ 缺失会在 generate_context! 处直接报
+#    "this path doesn't exist"，届时顺序就是硬依赖。
+# 3) **不在 CI 跑 npm run compare-screenshots**：基准目录写死在
+#    D:/Codex/TTS图包制作维护工具/ui-design/round-03/shots（本机绝对路径，不在仓内），
+#    runner 上必不存在；五面截图 diff≤5% 属 Stage C 本机人工验收项，不上 CI。
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+
+env:
+  CI: true
+
+jobs:
+  build-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # 与 tts-toolkit 的 ci.yml 同款：package.json 无 packageManager 字段，
+      # corepack 对 npm 无效；显式装 npm 11.9.0 保证 npm ci 行为可复现。
+      - name: Pin npm
+        run: npm install -g npm@11.9.0
+
+      - name: Install
+        run: npm ci
+
+      # 前端构建（tsc 类型检查 + vite build）；同时产出 dist/ 供下面的 cargo check 嵌入
+      - name: Build (frontend)
+        run: npm run build
+
+      # 缓存必须在 cargo check **之前**：actions/cache 在步骤开始时恢复，命中即省掉
+      # 依赖下载与全量编译；未命中时它注册 post 钩子，在 job 结束时保存本次产物。
+      # 用官方 actions/cache 而非 Swatinem/rust-cache（第三方 action，此处不需要它的
+      # target 目录拆分能力，少引一个供应链面）。
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      # Rust 侧类型校验 —— 必须在 Build 之后，见头注 2；--locked 保证 Cargo.lock
+      # 已随 Cargo.toml 一起提交（改了依赖/版本就要本地 cargo check 后提交锁文件）
+      - name: Cargo check
+        working-directory: src-tauri
+        run: cargo check --locked

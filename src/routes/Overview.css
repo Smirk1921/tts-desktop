@@ -1,0 +1,164 @@
+/* ============================================================================
+ * <Overview> ⓪ 总览面样式 — UI-4 Stage A2（首进阶梯）+ Stage B1（路由骨架布局）
+ *
+ * 本文件两块：下半「布局」段 = Stage B1 补的路由骨架（a-deep.html 48-49/68-70/94 行）；
+ * 其余是 Stage A2 的「首次进入阶梯」（round-03 §2.6 动效三件套之三，
+ * 参考 ui-design/round-03/candidates/a-deep.html 301-307 行）：
+ *   工序章五枚 + 内容块两项，按阅读顺序 translateY(10px) + opacity 0 → 归位，
+ *   延迟阶梯 02/07/12/17/22/26/32。
+ * 内容块的外框/标题（a-deep .ov-blk 的边框与 .bh 头）由各块组件自己负责
+ * （TodoList / MiniFileTree / LayerTiles … 均自带块级外框），本文件的 .ov-blk
+ * 只作动效钩子，不重复画框，避免与组件样式叠成双线。
+ *
+ * ── 类名语义（契约 §6，装配方在 Overview.tsx 施加）──────────────────────────
+ *   .ov-enter        pre 出场态（translateY(10px) + opacity 0）
+ *   .ov-enter-done   移除 pre 态 → 元素的 transition 归位
+ * 装配方用法（推荐：整面一个容器 + useFirstEnter）：
+ *   const entered = useFirstEnter();          // src/hub/useFirstEnter.ts
+ *   <div className={entered ? "ov-enter-done" : "ov-enter"}>
+ *     <ProcessStamps steps={data.stamps} />          ← .processstamps-stamp 自动错落
+ *     <div className="ov-grid">
+ *       <div className="ov-blk">…</div>              ← delay .26s
+ *       <div className="ov-blk">…</div>              ← delay .32s
+ *     </div>
+ *   </div>
+ * 元素级用法等价：把 .ov-enter / .ov-enter-done 直接加在 .ov-blk 上即可。
+ * pre 态只落在「工序章 + 内容块」上，不落在容器本身——避免与 <RouteSlide> 的
+ * translateX 滑入叠成两段位移。
+ *
+ * ── 取巧说明 ───────────────────────────────────────────────────────────────
+ * 1) 时长 .4s ease 按 §2.6 第三件套原文取字面量：该套动的时长未令牌化
+ *    （§2.6 的 --dur-* 只覆盖遮罩淡入 / 工作面滑入 / 确认门生长），
+ *    阶梯延迟 .02–.32s 同样是字面量；若后续把 .4s 收进令牌（--dur-enter），
+ *    只改本文件这一处。
+ * 2) transition 写在元素本体（不在 .ov-enter 上）：若写在 .ov-enter 里，
+ *    换类那一帧 transition 声明会随类一起消失，过渡不产生。
+ * 3) prefers-reduced-motion 由 tokens.css 全局 transition:none 兜底，
+ *    本文件不重复写 media query；此时类切换照常发生，元素直接落终态。
+ * ==========================================================================*/
+
+/* ── 出场元素白名单：工序章五枚 + 内容块两项 ─────────────────────────────────
+ * 类名有变时只改这一组选择器（.processstamps-stamp 见 components/ProcessStamps.tsx，
+ * .ov-blk 为总览面块容器约定名）。 */
+.processstamps-stamp,
+.ov-blk {
+  transition:
+    transform .4s ease,
+    opacity .4s ease;
+}
+
+/* ── 阶梯延迟：阅读顺序，与 round-03 逐字一致 ────────────────────────────── */
+.processstamps-stamp:nth-child(1) {
+  transition-delay: 0.02s;
+}
+.processstamps-stamp:nth-child(2) {
+  transition-delay: 0.07s;
+}
+.processstamps-stamp:nth-child(3) {
+  transition-delay: 0.12s;
+}
+.processstamps-stamp:nth-child(4) {
+  transition-delay: 0.17s;
+}
+.processstamps-stamp:nth-child(5) {
+  transition-delay: 0.22s;
+}
+
+/* 内容块两项：.26 / .32s（嵌套在列容器里时各为其父的第一子 → 同为 .26s，
+ * 与 a-deep 的 .ov-blk:nth-child(1)/（2）写法一致） */
+.ov-blk:nth-child(1) {
+  transition-delay: 0.26s;
+}
+.ov-blk:nth-child(2) {
+  transition-delay: 0.32s;
+}
+
+/* ── pre 态（translateY(10px) + opacity 0）────────────────────────────────
+ * 容器式：祖先带 .ov-enter 且尚未标 done；
+ * 元素式：元素自身带 .ov-enter 且尚未标 done（此时元素必是白名单成员）。 */
+.ov-enter:not(.ov-enter-done) .processstamps-stamp,
+.ov-enter:not(.ov-enter-done) .ov-blk,
+.processstamps-stamp.ov-enter:not(.ov-enter-done),
+.ov-blk.ov-enter:not(.ov-enter-done) {
+  transform: translateY(10px);
+  opacity: 0;
+}
+
+/* ============================================================================
+ * 布局 — UI-4 Stage B1 路由骨架（a-deep.html 48-49 / 68-70 / 94 行）
+ *
+ * 结构（Overview.tsx 组装）：
+ *   .overview（横排）├ .ov-main（flex:1）= .ov-stamps + .ov-grid 双列
+ *                    └ .ov-side（290px 定宽）
+ * 线框分隔：右栏左缘 1px dashed --wdim（分栏用虚线，§2.4）；块外框由各展示组件自管
+ *   （TodoList / MiniFileTree / LayerTiles 自带 1px --wdim 框），.ov-blk 只作动效钩子，
+ *   .ov-ev 只给「事件流」这一块补同款框（EventFlow 自带头部，无自有外框）。
+ * 全引用 tokens.css 变量；290px 栏宽与 a-deep 逐字一致（同 Agent.css 的 320px 列宽）。
+ * ==========================================================================*/
+
+.overview {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ov-main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-6); /* a-deep：20px 24px */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 工序章容器：只作阶梯动效钩子 + 章面与下部的间距（a-deep .stamps margin 0 0 18px）；
+ * flex:none —— 主轴（纵向）压缩不得压扁章面，余量归 .ov-grid */
+.ov-stamps {
+  flex: none;
+  margin-bottom: var(--sp-4);
+}
+
+/* 下部两栏填实：左工作区 / 右事件流（1fr 1fr） */
+.ov-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+.ov-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 同列两块之间的间距（a-deep 左列第二块 margin-top:14px → 取最近的间距令牌） */
+.ov-col > .ov-blk + .ov-blk {
+  margin-top: var(--sp-3);
+}
+
+/* 事件流块：吃满右列高度（.eventflow 自带 height:100% + 内部滚动），框同左列两块 */
+.ov-ev {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: var(--border-w) solid var(--wdim);
+  background: var(--bp);
+  overflow: hidden;
+}
+
+/* 右栏：290px 定宽（a-deep 290px，不随窗口伸缩），左缘虚线分栏 */
+.ov-side {
+  width: 290px;
+  flex: none;
+  padding: var(--sp-4);
+  border-left: var(--border-w) dashed var(--wdim);
+  background: var(--bp); /* 盖住 canvas 的 42px 网格底纹（a-deep .ov-side 同） */
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  overflow-y: auto;
+}
+

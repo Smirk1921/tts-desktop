@@ -1,0 +1,42 @@
+/* <MiniFileTree> 工作区迷你文件树 — UI-4 Stage A1（a-deep.html .ov-blk + .ftree/.ftn）
+ * 块：1px --wdim 外框 + 底 --bp（总览面板底，与 待办 同款）；
+ * 标题行：仿宋小字 + 3px 字距，右小注等宽弱色（数据层）。
+ * 复用 <CodeFileTree>：覆盖其底色（bp-dd → 面板底 --bp）与高度（100% → 自然高度），
+ * 行高/字族/状态符号色一律沿用 CodeFileTree.css（单一事实源，不复制样式）。 */
+
+.miniftree {
+  border: var(--border-w) solid var(--wdim);
+  background: var(--bp);
+}
+
+.miniftree-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: var(--border-w) solid var(--wdim);
+}
+
+.miniftree-title {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 3px;
+  color: var(--w);
+}
+
+/* 右上角小注：差异 N / 未注册图包（等宽弱色，数字表格化） */
+.miniftree-note {
+  font-family: var(--mono);
+  font-size: var(--fs-note);
+  line-height: var(--lh-data);
+  letter-spacing: 1px;
+  color: var(--wdim);
+  white-space: nowrap;
+}
+
+/* 复用件的底与高度适配：面板底、自然高度（外层若给高度上限则由 .codetree 自身滚动） */
+.miniftree-body .codetree {
+  height: auto;
+  background: var(--bp);
+}

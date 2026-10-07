@@ -43,6 +43,7 @@ import CardBackPreview from "../components/CardBackPreview";
 import SliceGrid from "../components/SliceGrid";
 import type { SheetMeta, SliceCard } from "../components/SliceGrid";
 import CardFacePreview from "../components/CardFacePreview";
+import { RouteSlide } from "../components/RouteSlide";
 
 import { useConfirmGate, useHub } from "../hub/HubContext";
 import { useSseEvents } from "../hub/useSseEvents";
@@ -749,7 +750,7 @@ function CardsInner(): ReactElement {
   };
 
   return (
-    <div className="route-slide">
+    <RouteSlide>
       <div className="cards-layout">
         {/* 对象区：牌堆列表（上） + 卡背预览（下） */}
         <aside className="cards-obj">
@@ -917,7 +918,7 @@ function CardsInner(): ReactElement {
           </div>
         </aside>
       </div>
-    </div>
+    </RouteSlide>
   );
 }
 

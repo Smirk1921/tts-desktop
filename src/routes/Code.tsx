@@ -27,10 +27,12 @@ import type { TreeNode } from "../components/CodeFileTree";
 import CodeDiffView from "../components/CodeDiffView";
 import type { DiffEntry } from "../components/CodeDiffView";
 import CodeEditor from "../components/CodeEditor";
+import { RouteSlide } from "../components/RouteSlide";
 
 import { useConfirmGate, useHub, type ConfirmRequest } from "../hub/HubContext";
 import { useSseEvents } from "../hub/useSseEvents";
 import { useJobTracker } from "../hub/useJobTracker";
+import { useDirty } from "../state/DirtyContext";
 import { sha256Hex } from "../hub/sha256";
 import { isHubError } from "../hub/errors";
 
@@ -107,6 +109,9 @@ function CodeInner(): ReactElement {
   const { events: sseEvents } = useSseEvents();
   const { track } = useJobTracker();
   const { ask } = useConfirmGate();
+  // 脏通道（UI-4 Stage B1 最小接入）：编辑器缓冲的未提交改动上报给全站 store，
+  // App.tsx ① 代码 dot（蓝）与会签栏版本行的未提交数同源；本面照旧只管自己的编辑态
+  const { markDirty, markClean } = useDirty();
 
   // ---- 数据状态 ----
   const [root, setRoot] = useState<string | null>(null);
@@ -232,6 +237,9 @@ function CodeInner(): ReactElement {
   const handleSelect = useCallback(
     async (guid: string, kind: EntryKind): Promise<void> => {
       if (root === null || loading) return;
+      // 脏通道：切换 / 重载都会丢弃编辑器缓冲（本面既有行为），上一个对象的未提交
+      // 标记随之清除；重新加载当前对象即「还原」→ 同样在这条路径上标干净
+      if (activeGuid !== null) markClean(activeGuid);
       const entry = diffEntries.find((e) => e.guid === guid && e.kind === kind) ?? null;
       setTab("edit");
       setActiveGuid(guid);
@@ -260,7 +268,7 @@ function CodeInner(): ReactElement {
         setError(e instanceof Error ? e.message : String(e));
       }
     },
-    [root, loading, diffEntries, caps.canReadFiles, client, track],
+    [root, loading, diffEntries, caps.canReadFiles, client, track, activeGuid, markClean],
   );
 
   const openEntryInEditor = useCallback(
@@ -270,10 +278,15 @@ function CodeInner(): ReactElement {
     [handleSelect],
   );
 
-  const handleEditorChange = useCallback((next: string): void => {
-    setEditedContent(next);
-    setDirty(true);
-  }, []);
+  const handleEditorChange = useCallback(
+    (next: string): void => {
+      setEditedContent(next);
+      setDirty(true);
+      // 脏通道：编辑器里有改动（保存 / 还原前）→ 上报当前对象，① 代码 dot 转蓝
+      if (activeGuid !== null) markDirty(activeGuid);
+    },
+    [activeGuid, markDirty],
+  );
 
   // ---- 保存：filesWrite（乐观锁）；409 → 冲突条 ----
   const handleSave = useCallback(async (): Promise<void> => {
@@ -289,6 +302,8 @@ function CodeInner(): ReactElement {
       setOriginalSha256(res.sha256);
       setDirty(false);
       setConflict(false);
+      // 脏通道：落盘成功 → 该对象的未提交改动清除
+      if (activeGuid !== null) markClean(activeGuid);
       await refreshDiff(root);
     } catch (e) {
       if (isHubError(e) && e.code === "HUB_CONFLICT") {
@@ -299,7 +314,17 @@ function CodeInner(): ReactElement {
     } finally {
       setBusy(false);
     }
-  }, [root, activeEntry, originalSha256, editedContent, client, track, refreshDiff]);
+  }, [
+    root,
+    activeEntry,
+    originalSha256,
+    editedContent,
+    client,
+    track,
+    refreshDiff,
+    activeGuid,
+    markClean,
+  ]);
 
   /** 冲突条「强制覆盖」：不带 baseSha256 绕过乐观锁（用户显式选择） */
   const handleForceOverwrite = useCallback(async (): Promise<void> => {
@@ -314,13 +339,15 @@ function CodeInner(): ReactElement {
       setOriginalSha256(res.sha256);
       setDirty(false);
       setConflict(false);
+      // 脏通道：强制覆盖同样已落盘 → 清除该对象的未提交改动
+      if (activeGuid !== null) markClean(activeGuid);
       await refreshDiff(root);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
-  }, [root, activeEntry, editedContent, client, track, refreshDiff]);
+  }, [root, activeEntry, editedContent, client, track, refreshDiff, activeGuid, markClean]);
 
   // ---- 重新拉取：游戏内 → 工作区，再重 diff ----
   const handlePull = useCallback(async (): Promise<void> => {
@@ -426,7 +453,7 @@ function CodeInner(): ReactElement {
   };
 
   return (
-    <div className="route-slide">
+    <RouteSlide>
       <div className="code-layout">
         {/* 对象区：差异文件树 */}
         <aside className="code-obj">
@@ -538,7 +565,7 @@ function CodeInner(): ReactElement {
           </div>
         </aside>
       </div>
-    </div>
+    </RouteSlide>
   );
 }
 
