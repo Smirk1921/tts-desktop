@@ -4,6 +4,23 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+/// 探测 tts-hub 控制通道端口是否可连（UI-1b，施工方案 v0.8.0 §8.2 方案 C）。
+///
+/// HubLauncher 启动时先经此命令做 TCP 探测（127.0.0.1:port），不通则弹引导对话框。
+/// 只测端口连通性，不读 HTTP——版本 / appMode 由前端 `GET /v1/status` 再确认。
+/// 返回 Ok(true)=端口可连，Ok(false)=不可连；参数非法时 Err(描述)。
+/// JS 侧经 `invoke("check_hub", { port, timeoutMs })` 调用（Tauri 2 自动 camelCase↔snake_case）。
+#[tauri::command]
+fn check_hub(port: u16, timeout_ms: u64) -> Result<bool, String> {
+    use std::net::{SocketAddr, TcpStream};
+    use std::time::Duration;
+
+    let addr: SocketAddr = format!("127.0.0.1:{port}")
+        .parse()
+        .map_err(|e| format!("invalid address 127.0.0.1:{port}: {e}"))?;
+    Ok(TcpStream::connect_timeout(&addr, Duration::from_millis(timeout_ms)).is_ok())
+}
+
 /// 检测系统是否安装 WebView2 Runtime。
 ///
 /// 实现：查注册表 `HKLM\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}`，
@@ -65,7 +82,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, check_hub])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

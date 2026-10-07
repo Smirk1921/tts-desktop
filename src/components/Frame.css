@@ -110,7 +110,11 @@
 }
 
 .frame-status-dot {
-  color: var(--ok); /* 已连接 = 青色 */
+  color: var(--ok); /* 已连接 = 青色（§2.5） */
+}
+
+.frame-status-dot.off {
+  color: var(--red); /* 未连接 = 红色（§2.5） */
 }
 
 .frame-status-right {

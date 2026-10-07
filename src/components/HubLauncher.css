@@ -1,0 +1,150 @@
+/* <HubLauncher> — UI-1b（施工方案 v0.8.0 §8.2 方案 C 引导对话框）
+ * tokens：var(--bp-d) 面板底 + var(--w) 边框 + var(--amber) 警示；直角、无投影 */
+
+.hublauncher {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bp-dd);
+}
+
+.hublauncher-panel {
+  width: 520px;
+  max-width: calc(100vw - var(--sp-6) * 2);
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  padding: var(--sp-5);
+  color: var(--w);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* 标题：琥珀方框标（等待人审语义，§2.5） */
+.hublauncher-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.hublauncher-marker {
+  width: 12px;
+  height: 12px;
+  background: var(--amber);
+  border-radius: var(--radius-max);
+  flex-shrink: 0;
+}
+
+.hublauncher-title {
+  margin: 0;
+  font-family: var(--fs);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--w);
+  letter-spacing: 1px;
+}
+
+/* 标注文字（仿宋层） */
+.hublauncher-note {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--w);
+}
+
+.hublauncher-note--dim {
+  color: var(--wdim);
+}
+
+.hublauncher-warn {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--fs);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--amber); /* 警示 = 琥珀（§2.5） */
+  letter-spacing: 1px;
+}
+
+/* 步骤：仿宋标注 + 等宽命令行 */
+.hublauncher-step {
+  margin-bottom: var(--sp-3);
+}
+
+.hublauncher-step-note {
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+  margin-bottom: var(--sp-1);
+}
+
+.hublauncher-cmd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+}
+
+.hublauncher-cmd-text {
+  font-family: var(--mono);
+  font-size: var(--fs-data);
+  line-height: var(--lh-data);
+  color: var(--w);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text; /* 命令可手选复制 */
+}
+
+.hublauncher-cmd-copy {
+  flex-shrink: 0;
+  padding: 2px var(--sp-2);
+  border: var(--border-w) solid var(--wdim);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 0.5px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.hublauncher-cmd-copy:hover {
+  border-color: var(--w);
+  background: var(--wfaint);
+}
+
+/* 底部动作区 */
+.hublauncher-act {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-4);
+}
+
+.hublauncher-btn {
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  background: transparent;
+  color: var(--w);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  letter-spacing: 1px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+
+.hublauncher-btn:hover:not(:disabled) {
+  background: var(--wfaint);
+}
