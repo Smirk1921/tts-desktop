@@ -1,20 +1,27 @@
 /**
- * App.tsx — UI-1a 状态机
+ * App.tsx — UI-1a 状态机 + UI-1b hub 接入
  *
  * 职责：
+ *  - UI-1b：caps === null → <HubLauncher>（探测 39995 / 引导启动 / 版本兼容门）；
+ *    验证通过后经 HubContext.Provider 下发 client 单例 + caps，渲染 Frame + 当前路由
  *  - 持有 activeLayer（0..4），渲染 Frame + LayerNav + LegendBar + 当前路由 + SignBlock + ConfirmGate
- *  - 演示数据：图名 mypack / 版本 v1.3·main / SignBlock 占位 / ConfirmGate 演示
+ *  - caps 就绪后轮询 /v1/status → 真实连接状态 → Frame 状态行
  *
- * UI-1b 在此接入：
- *  - 启动时调 /v1/status → 真实连接状态 → 替换 Frame 状态行 / LayerNav 圆点色
- *  - hubCapabilities → 决定 SignBlock 哪些工序可用、ConfirmGate 真实触发条件
+ * UI-2/3/4 在此接入：
+ *  - LayerNav 圆点按真实工作面状态计算（现仍为演示硬编码）
+ *  - ConfirmGate 接真实 /v1/push confirm:true；死链 / 待签数接真实数据
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Frame from "./components/Frame";
 import LayerNav, { LayerItem } from "./components/LayerNav";
 import LegendBar from "./components/LegendBar";
 import SignBlock from "./components/SignBlock";
 import ConfirmGate from "./components/ConfirmGate";
+import HubLauncher from "./components/HubLauncher";
+
+import { HubContext, hubClient } from "./hub/HubContext";
+import type { HubCapabilities } from "./hub/capabilities";
+import type { HubStatus } from "./hub/client";
 
 import Overview from "./routes/Overview";
 import Code from "./routes/Code";
@@ -33,6 +40,8 @@ const LAYERS: LayerItem[] = [
 ];
 
 const PACK = { name: "mypack", version: "v1.3", branch: "main" };
+
+const STATUS_POLL_MS = 30_000;
 
 const SIGN_CHECKS = [
   { k: "版本", v: "v1.3 · 已生成", tone: "ok" as const },
@@ -54,8 +63,30 @@ const DEMO_CONFIRM_ITEMS = [
 ];
 
 function App() {
+  const [caps, setCaps] = useState<HubCapabilities | null>(null);
+  const [status, setStatus] = useState<HubStatus | null>(null);
   const [activeLayer, setActiveLayer] = useState<LayerId>("overview");
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // caps 就绪后轮询 /v1/status：真实 TTS 连接状态 → Frame 状态行
+  useEffect(() => {
+    if (caps === null) return;
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const s = await hubClient.status();
+        if (!cancelled) setStatus(s);
+      } catch {
+        if (!cancelled) setStatus(null);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), STATUS_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [caps]);
 
   const routeElement = (() => {
     switch (activeLayer) {
@@ -67,10 +98,17 @@ function App() {
     }
   })();
 
+  // caps 未就绪：先过 HubLauncher（探测 / 引导 / 版本兼容门）
+  if (caps === null) {
+    return <HubLauncher onReady={setCaps} />;
+  }
+
   return (
-    <>
+    <HubContext.Provider value={{ client: hubClient, caps }}>
       <Frame
         pack={PACK}
+        connected={status?.tts.connected ?? false}
+        version={status?.tts.version}
         nav={
           <LayerNav
             items={LAYERS}
@@ -102,11 +140,11 @@ function App() {
         ackLabel="我已知晓上述影响，确认写回"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
-          // UI-1a：演示确认（不真实调 hub）；UI-1b 在此接 /v1/push confirm:true
+          // UI-2 在此接真实 /v1/push confirm:true（hubClient.push(root, true)）
           setConfirmOpen(false);
         }}
       />
-    </>
+    </HubContext.Provider>
   );
 }
 
