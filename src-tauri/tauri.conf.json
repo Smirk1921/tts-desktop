@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run copy-product && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -29,6 +29,8 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "externalBin": ["bin/tts-hub"],
+    "resources": ["resources/sidecar"],
     "publisher": "Smirk1921",
     "copyright": "© 2026 Smirk1921",
     "shortDescription": "TTS 图包制作维护工作台",

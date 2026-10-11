@@ -1,5 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+/// v9-2 sidecar（任务 A2）：内嵌 tts-hub 进程管理——启动 / 停止 / 外置 hub 检测与版本检查。
+pub mod sidecar;
+
 /// 探测 tts-hub 控制通道端口是否可连（UI-1b，施工方案 v0.8.0 §8.2 方案 C）。
 ///
 /// HubLauncher 启动时先经此命令做 TCP 探测（127.0.0.1:port），不通则弹引导对话框。
@@ -69,6 +72,20 @@ fn is_webview2_present() -> bool {
     detect_webview2().is_some()
 }
 
+/// 查询 hub 运行状态命令（v9-2，前端 HubLauncher 轮询用）。
+///
+/// 简化版：只做 Rust 侧 TCP 探测（[`sidecar::is_hub_running`]，有界 200ms 阻塞），
+/// 判断 39995 是否 LISTENING。`version` / `is_embedded` 由前端并发调
+/// `GET /v1/status`（版本字段在 `hub.version`，v9-2 契约）补充，这里恒为 `None` / `false`。
+#[tauri::command]
+fn sidecar_get_status() -> sidecar::HubStatus {
+    sidecar::HubStatus {
+        running: sidecar::is_hub_running(sidecar::HUB_PORT),
+        version: None,
+        is_embedded: false,
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -93,9 +110,41 @@ pub fn run() {
                     }
                 }
             }
+
+            // v9-2：后台启动 sidecar（不阻塞 UI 启动——sidecar 启动最多 5s，
+            // setup 是同步闭包，async 启动序列必须 spawn 到 async_runtime）。
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                match sidecar::start_hub_sidecar(&app_handle).await {
+                    Ok(status) => {
+                        if status.is_embedded {
+                            println!("[sidecar] embedded hub started, version: {:?}", status.version);
+                        } else {
+                            println!("[sidecar] using external hub, version: {:?}", status.version);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("[sidecar] failed to start: {}", e);
+                        // 不 panic，前端 HubLauncher 会接管降级
+                    }
+                }
+            });
+
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![check_hub, is_webview2_present])
+        .on_window_event(|_window, event| {
+            // v9-2：窗口关闭请求是同步回调，直接 kill 自己起的 sidecar
+            // （外置 hub 不动，sidecar.rs §2.2 关闭序列）；钩子本身同步，无需 spawn。
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                sidecar::stop_hub_sidecar();
+                println!("[sidecar] window closing, sidecar stopped");
+            }
+        })
+        .invoke_handler(tauri::generate_handler![
+            check_hub,
+            is_webview2_present,
+            sidecar_get_status
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

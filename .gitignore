@@ -27,6 +27,10 @@ dist-ssr
 src-tauri/target/
 # Cargo.lock stays tracked (binary app, not library)
 
+# v9-2 sidecar 产物（copy-product.mjs 每次 build 重新生成，不入库）
+src-tauri/bin/tts-hub-*.exe
+src-tauri/resources/sidecar/
+
 # UI-4 screenshot compare artifacts (round-03/shots is baseline, in git)
 screenshots/current/
 screenshots/compare-report.json

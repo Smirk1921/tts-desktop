@@ -185,3 +185,48 @@
   flex-shrink: 0;
   padding: var(--sp-1) var(--sp-3);
 }
+
+/* ---- v9-2 任务 B2：sidecar-starting 进度条（indeterminate） ---- */
+
+.hublauncher-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--bp-d);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.hublauncher-progress::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: var(--amber);
+  animation: hublauncher-progress-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes hublauncher-progress-slide {
+  0% {
+    left: -50%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ---- v9-2 任务 B2：次要按钮（sidecar-failed / external-outdated 的降级路径）；
+   须置于 .hublauncher-btn 之后以覆盖底色 ---- */
+
+.hublauncher-btn--secondary {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+}
+
+.hublauncher-btn--secondary:hover {
+  background: var(--amber);
+  color: var(--bp-d);
+}

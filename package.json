@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "make-icons": "node scripts/make-icons.mjs",
-    "compare-screenshots": "node scripts/compare-screenshots.mjs"
+    "compare-screenshots": "node scripts/compare-screenshots.mjs",
+    "copy-product": "node scripts/copy-product.mjs"
   },
   "dependencies": {
     "@codemirror/lang-xml": "^6.1.0",
