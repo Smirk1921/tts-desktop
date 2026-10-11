@@ -11,6 +11,45 @@
 > 占位：v0.1.0 之后的变更从这里开始累积。UI-4 收尾（动效三件套、Tauri 打包、
 > 五面截图比对）尚未合并前的条目仍并入下面的 `[0.1.0]` 段。
 
+## [0.2.0] - 2026-10-XX — Embedded hub sidecar
+
+### Added / 新增
+
+- **Embedded hub sidecar (Plan A)**: tts-hub is bundled as a Tauri sidecar
+  (node.exe renamed to `bin/tts-hub-x86_64-pc-windows-msvc.exe` as externalBin,
+  plus `resources/sidecar/` containing dist/, node_modules/, and sharp native
+  DLLs). The desktop app starts and stops it automatically on launch/close.
+  No Node.js installation required.
+- **External hub version check**: when an external hub is already running on
+  port 39995, the app checks `GET /v1/status` for `hub.version` and shows an
+  "external hub outdated" dialog if it's older than 0.9.0, offering choices to
+  close the external hub or continue in degraded mode.
+- **HubLauncher state machine**: 6-phase flow (checking → sidecar-starting →
+  sidecar-failed / external-outdated / guide / unsupported) with progress
+  indicator during sidecar startup and graceful degradation to manual hub
+  startup on sidecar failure.
+
+### Changed / 变更
+
+- **HubLauncher**: skips version check for embedded sidecar (always compatible);
+  keeps version check for external hubs. WebView2 missing warning now overlays
+  on all phases except initial checking.
+
+### Build / 构建
+
+- **copy-product.mjs**: new build script to sync v9-1 product outputs
+  (node.exe + dist/ + node_modules/ + native/) from tts-toolkit/product/ to
+  src-tauri/bin/ and src-tauri/resources/sidecar/. Supports --if-changed
+  incremental mode and --dry-run preview.
+- **.gitignore**: excludes sidecar artifacts (src-tauri/bin/tts-hub-*.exe and
+  src-tauri/resources/sidecar/) — regenerated on each build.
+
+### Requirements / 运行要求
+
+- Windows 10 1809+ (WebView2 auto-installed via downloadBootstrapper on first run)
+- Tabletop Simulator running with a save loaded (for online features)
+- v9-1 product outputs from tts-toolkit (for sidecar bundling)
+
 ## [0.1.0] - 2026-10-08
 
 ### Added / 新增
