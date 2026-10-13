@@ -1,0 +1,143 @@
+/* <FirstRunWizard> — v9-3 首次启动向导（施工方案 §6.3）
+ * tokens：var(--bp-dd) 全屏底 + var(--bp-d) 面板 + var(--amber) 方框标（等待人审语义 §2.5）；
+ * 直角、无投影，对齐 HubLauncher 引导页视觉。全站引用变量，不写死值。 */
+
+.wizard {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bp-dd);
+}
+
+.wizard-panel {
+  width: 520px;
+  max-width: calc(100vw - var(--sp-6) * 2);
+  background: var(--bp-d);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  padding: var(--sp-5);
+  color: var(--w);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* 标题：琥珀方框标（待人审/引导语义，§2.5） */
+.wizard-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-w) solid var(--wfaint);
+}
+
+.wizard-marker {
+  width: 12px;
+  height: 12px;
+  background: var(--amber);
+  border-radius: var(--radius-max);
+  flex-shrink: 0;
+}
+
+.wizard-title {
+  margin: 0;
+  font-family: var(--fs);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--w);
+  letter-spacing: 1px;
+}
+
+/* 标注文字（仿宋层） */
+.wizard-note {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--fs);
+  font-size: var(--fs-note);
+  color: var(--wdim);
+}
+
+/* 三选一 radio 列表 */
+.wizard-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.wizard-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--border-w) solid var(--wfaint);
+  border-radius: var(--radius-max);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.wizard-option:hover {
+  border-color: var(--wdim);
+}
+
+/* 选中态：蓝（选中语义 §2.5） */
+.wizard-option:has(input:checked) {
+  border-color: var(--blue);
+}
+
+.wizard-option input[type="radio"] {
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--blue);
+}
+
+.wizard-option-text {
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  color: var(--w);
+}
+
+/* 双按钮（主 + 次对齐 HubLauncher footer） */
+.wizard-act {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+  padding-top: var(--sp-3);
+  border-top: var(--border-w) solid var(--wfaint);
+}
+
+.wizard-btn {
+  padding: var(--sp-1) var(--sp-4);
+  background: var(--bp-dd);
+  border: var(--border-w) solid var(--w);
+  border-radius: var(--radius-max);
+  color: var(--w);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.wizard-btn:hover:not(:disabled) {
+  background: var(--bp);
+}
+
+/* 次按钮：弱化边框与文字（须置于 .wizard-btn 之后以覆盖） */
+.wizard-btn--secondary {
+  border-color: var(--wdim);
+  color: var(--wdim);
+}
+
+.wizard-btn--secondary:hover {
+  border-color: var(--w);
+  color: var(--w);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-option,
+  .wizard-btn {
+    transition: none;
+  }
+}

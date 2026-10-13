@@ -90,6 +90,9 @@ fn sidecar_get_status() -> sidecar::HubStatus {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_fs::init())
+        // v9-3 首次向导 B1：'example' 分支 save-dialog 选解开目录（前端 @tauri-apps/plugin-dialog）
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // UI-1a 验收点：WebView2 启动检测钩子（UI-4 Stage B2 补窗口标题提示）
             use tauri::Manager;

@@ -37,11 +37,22 @@
  * 增量实现要点：复制后用 utimes 把目标 mtime 写回为源 mtime，
  * 否则目标 mtime 恒为"复制时刻"，--if-changed 的对比永远不等、增量失效。
  * 已知限制：增量模式不回收目标里已消失的陈旧文件（需要回收用全量模式）。
+ *
+ * v9-3 窗口 B2 追加（施工方案 §6.3）：主同步完成后追加两步产物收集 ——
+ *   1. collect-vsix.mjs：把 ../vscode-ext/ 下最新 .vsix → src-tauri/resources/vscode-ext/
+ *      （tauri.conf.json bundle.resources 的 "resources/vscode-ext" 打包进安装器；
+ *        失败只 warn 不 fail —— 构建期允许"暂时没有插件产物"）。
+ *   2. copy-example.mjs：把 v8-2 夹具 s_dial.ttsmod → src-tauri/resources/examples/sample.ttsmod
+ *      （首次启动向导"打开示例图包"用；失败 fail —— 示例图包是验收必需品）。
+ *   幂等：两脚本各自按 sha256 内容一致性跳过（content-hash 一致就 skip），
+ *   与本脚本的 --if-changed（size+mtime）语义对齐；--dry-run 只打印将执行的
+ *   两步、不 spawn 子进程、不落盘。
  */
 import { copyFile, mkdir, readdir, rm, stat, utimes } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const DESKTOP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC_ROOT = path.resolve(DESKTOP_ROOT, "..", "tts-toolkit", "product");
@@ -143,6 +154,45 @@ async function isUnchanged(file, destAbs) {
   }
 }
 
+/**
+ * 跑一个 scripts/ 下的子产物脚本（v9-3 窗口 B2）。
+ * @param {string} script 相对 scripts/ 的脚本文件名，如 "collect-vsix.mjs"
+ * @param {string} label 步骤日志名
+ * @param {{optional: boolean}} opts optional=true 时失败只 warn 不 fail（collect-vsix：
+ *        仓库尚无 .vsix 属正常状态）；optional=false 时失败直接抛错终止（copy-example）。
+ * @returns {{status: number}}
+ */
+function runScriptStep(script, label, { optional }) {
+  const scriptPath = path.join(DESKTOP_ROOT, "scripts", script);
+  if (!existsSync(scriptPath)) {
+    const msg = `${label}: 脚本缺失 ${scriptPath}`;
+    if (optional) {
+      console.warn(`[copy-product] ⚠ ${msg} —— 跳过该步，不视为失败`);
+      return { status: 0 };
+    }
+    throw new Error(`[copy-product] ${msg}`);
+  }
+  const res = spawnSync(process.execPath, [scriptPath], {
+    cwd: DESKTOP_ROOT,
+    stdio: "inherit",
+  });
+  if (res.error) {
+    if (optional) {
+      console.warn(`[copy-product] ⚠ ${label}: 启动失败（${res.error.message}）—— 跳过该步，不视为失败`);
+      return { status: 0 };
+    }
+    throw new Error(`[copy-product] ${label}: 启动失败: ${res.error.message}`);
+  }
+  if (res.status !== 0) {
+    if (optional) {
+      console.warn(`[copy-product] ⚠ ${label}: 退出码 ${res.status} —— 跳过该步，不视为失败`);
+      return { status: 0 };
+    }
+    throw new Error(`[copy-product] ${label}: 退出码 ${res.status}`);
+  }
+  return { status: res.status };
+}
+
 async function main() {
   log(`源: ${SRC_ROOT}`);
   log(`目标 1 (externalBin 单 .exe): ${NODE_EXE_TARGET}`);
@@ -195,6 +245,10 @@ async function main() {
         log(`   ${unchanged ? "· 跳过(未变)" : "+ 复制"} ${f.rel} (${formatBytes(f.size)})`);
       }
     }
+    // v9-3 B2 追加的两步（dry-run 只预告、不 spawn：collect-vsix / copy-example 自身
+    // 按 sha256 内容一致性幂等，实际跑全量时才执行）
+    log("── examples（copy-example.mjs: tts-toolkit/tests/fixtures/s_dial.ttsmod → resources/examples/sample.ttsmod）: 将执行（sha256 一致则内部跳过）");
+    log("── vsix（collect-vsix.mjs: ../vscode-ext/*.vsix 最新一个 → resources/vscode-ext/）: 将执行（无 .vsix 时 warn 跳过；sha256 一致则内部跳过）");
     log(`dry-run 汇总: ${grandFiles} 个文件（node.exe 1 + resources ${resourcesFiles}）, 总大小 ${formatBytes(grandBytes)}；未写入任何文件`);
     return;
   }
@@ -277,6 +331,14 @@ async function main() {
     `完成: 目标共 ${grandFiles} 个文件（node.exe ${nodeExeCopied + nodeExeSkipped} + resources ${copied + skipped}）, ` +
       `总大小 ${formatBytes(grandBytes)}; 本次复制 ${nodeExeCopied + copied} 个 (${formatBytes(nodeExeFile.size + copiedBytes)}), 跳过未变 ${nodeExeSkipped + skipped} 个`,
   );
+
+  // 6. v9-3 B2 追加：examples + vsix 两步产物收集（在 sidecar 主同步之后执行）
+  //    collect-vsix 失败只 warn（构建期允许暂时没有 .vsix）；copy-example 失败直接 fail。
+  log("── 追加步骤 1/2: collect-vsix（../vscode-ext/ 最新 .vsix → resources/vscode-ext/）");
+  runScriptStep("collect-vsix.mjs", "collect-vsix", { optional: true });
+  log("── 追加步骤 2/2: copy-example（v8-2 夹具 s_dial.ttsmod → resources/examples/sample.ttsmod）");
+  runScriptStep("copy-example.mjs", "copy-example", { optional: false });
+  log("追加步骤完成: examples + vsix 两步均通过");
 }
 
 main().catch((err) => {

@@ -31,14 +31,47 @@
  *  - 已知缺口（留给 Stage C）：push 成功后 ⓪ 面五章/待签计数不会自动重算——Stage A 引擎
  *    只导出 clearStampCache()，没有 refetch 出口，且引擎挂在 AppInner（不随路由卸载），
  *    清缓存后不会重发请求；需要刷新窗口时给引擎加 refresh 触发（或 key 重挂载）。
+ *
+ * v9-3 Stage B1 接线（本窗口）：
+ *  - 首次启动三态（B1 任务书）：isFirstRun() → null=检测中 loading（复用 wizard 面板底色，
+ *    不闪屏）/ true=<FirstRunWizard> / false=原 caps===null ? HubLauncher : AppInner 流程。
+ *    向导整体排在 HubLauncher **之前**（首启先引导再连 hub）。
+ *  - handleWizardDone 四分支统一先 markFirstRunDone()（写 首次向导.flag，任务书契约）
+ *    再 setFirstRun(false)：'example' → resolveResource(sample.ttsmod) + plugin-dialog
+ *    目录选择器（open directory:true，默认 $DOCUMENT/tts-packs/sample）→ hubClient.importTtsmod
+ *    （POST /v1/pack/import-ttsmod，hub-control.md §4.17）→ 完成提示条；
+ *    'tutorial' → plugin-opener 打开 README 快速上手锚点；'existing'/'skip' 直接放行。
+ *  - 已知时序缺口（v9-4 真机验收关注）：'example' 的导入 POST 不等 sidecar 就绪——
+ *    内嵌 hub 启动期间（≤10s）会 NETWORK_ERROR，alert 报错后可回向导重按「开始」重试。
  */
-import { useCallback, useContext, useEffect, useMemo, useState, type JSX } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+} from "react";
+import {
+  basename as tauriBasename,
+  dirname as tauriDirname,
+  documentDir,
+  join as tauriJoin,
+  resolveResource,
+} from "@tauri-apps/api/path";
+import { open } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import Frame from "./components/Frame";
 import LayerNav, { type LayerItem } from "./components/LayerNav";
 import LegendBar from "./components/LegendBar";
 import SignBlock, { type SignCheck } from "./components/SignBlock";
 import ConfirmGate from "./components/ConfirmGate";
 import HubLauncher from "./components/HubLauncher";
+import FirstRunWizard from "./components/FirstRunWizard";
+import type { FirstRunChoice } from "./components/FirstRunWizard";
+import "./components/FirstRunWizard.css";
 
 import {
   ConfirmGateContext,
@@ -48,6 +81,7 @@ import {
   useConfirmGate,
   useHub,
 } from "./hub/HubContext";
+import { isHubError } from "./hub/errors";
 import { SseProvider, useSseEvents } from "./hub/useSseEvents";
 import { DeadLinkProvider, useDeadLinks } from "./state/DeadLinkContext";
 import { DirtyProvider, useDirty } from "./state/DirtyContext";
@@ -58,6 +92,7 @@ import {
   type LayerId,
   type OverviewData,
 } from "./state/processStamps";
+import { isFirstRun, markFirstRunDone } from "./lib/firstRun";
 import type { HubCapabilities } from "./hub/capabilities";
 import type { HubStatus } from "./hub/client";
 
@@ -94,6 +129,16 @@ const PACK_PLACEHOLDER: PackInfo = {
 
 const STATUS_POLL_MS = 30_000;
 
+// ---- v9-3 Stage B1：首次向导接线常量 ----
+
+/** 打包内示例图包（bundle.resources，plan 决策 2：独立 resources/examples/） */
+const SAMPLE_TTSMOD_RESOURCE = "resources/examples/sample.ttsmod";
+/** 教程锚点：tts-desktop README 5 分钟上手（施工方案 §6.2 任务 10 钦定链接） */
+const TUTORIAL_URL = "https://github.com/Smirk1921/tts-desktop#快速上手";
+/** 示例图包默认解开位置：文档目录下的 tts-packs/sample（B1 任务书钦定） */
+const SAMPLE_DEFAULT_DIRNAME = "sample";
+const SAMPLE_PACKS_PARENT = "tts-packs";
+
 /** 出厂工序（SignBlock）：写回游戏已开放，发布/同步仍是未开放占位（UI-4 不动） */
 const SIGN_PROCS = [
   { name: "写回游戏", state: "open" as const },
@@ -106,6 +151,17 @@ function basename(path: string): string {
   const parts = path.split(/[\\/]+/).filter((s) => s !== "");
   const last = parts[parts.length - 1];
   return last !== undefined && last !== "" ? last : path;
+}
+
+/** POST /v1/pack/import-ttsmod 失败的提示正文（B1）：业务码带 hub 文案，网络层说明 hub 未就绪可重试 */
+function buildImportErrorText(e: unknown): string {
+  if (isHubError(e)) {
+    if (e.code === "NETWORK_ERROR") {
+      return `无法连接 hub：${e.message}。内嵌 hub 启动可能尚未完成，请稍候重试。`;
+    }
+    return `导入失败（${e.code}）：${e.message}`;
+  }
+  return `导入失败：${e instanceof Error ? e.message : String(e)}`;
 }
 
 /** GET /v1/packs 响应 → 首项图包元信息（无条目返回 null；缺字段按契约取「无则」值） */
@@ -365,8 +421,246 @@ function ConfirmGateHost(): JSX.Element | null {
   );
 }
 
+/**
+ * 向导三子态面板（B1）：wizard = FirstRunWizard 原样；busy = 导入中状态条；
+ * done / error = 导入结果提示条（error 方框标转红，文案预换行）。
+ * 各子态都是独立面板（不嵌套），role 语义互斥、可查询。
+ */
+function FirstRunWizardPanel(): JSX.Element {
+  const { wizardStatus, wizardNotice, finishWizard, setWizardStatus, handleWizardDone } =
+    useWizardPanel();
+
+  if (wizardStatus === "wizard") {
+    return <FirstRunWizard onDone={(c) => void handleWizardDone(c)} />;
+  }
+
+  return (
+    <div
+      className="wizard-panel"
+      role={wizardStatus === "busy" ? "status" : "alertdialog"}
+      aria-modal={wizardStatus === "busy" ? undefined : "true"}
+      aria-label={
+        wizardStatus === "busy"
+          ? "正在导入示例图包"
+          : wizardStatus === "done"
+            ? "示例图包已就绪"
+            : "导入失败"
+      }
+    >
+      <header className="wizard-head">
+        <span
+          className="wizard-marker"
+          style={wizardStatus === "error" ? { background: "var(--red)" } : undefined}
+          aria-hidden
+        />
+        <h1 className="wizard-title">
+          {wizardStatus === "busy"
+            ? "正在导入示例图包…"
+            : wizardStatus === "done"
+              ? "示例图包已就绪"
+              : "导入失败"}
+        </h1>
+      </header>
+
+      {wizardStatus === "busy" && (
+        <p className="wizard-note">正在解开示例图包，请稍候…</p>
+      )}
+      {wizardStatus !== "busy" && (
+        <p className="wizard-note" style={{ whiteSpace: "pre-line" }}>
+          {wizardNotice}
+        </p>
+      )}
+
+      {wizardStatus !== "busy" && (
+        <footer className="wizard-act">
+          <button type="button" className="wizard-btn" onClick={() => void finishWizard()}>
+            {wizardStatus === "done" ? "进入工作台" : "仍要进入工作台"}
+          </button>
+          {wizardStatus === "error" && (
+            <button
+              type="button"
+              className="wizard-btn wizard-btn--secondary"
+              onClick={() => setWizardStatus("wizard")}
+            >
+              返回向导重试
+            </button>
+          )}
+        </footer>
+      )}
+    </div>
+  );
+}
+
+/** FirstRunWizardPanel 的状态/回调来源（App 组件提供） */
+interface WizardPanelContextValue {
+  wizardStatus: "wizard" | "busy" | "done" | "error";
+  wizardNotice: string;
+  handleWizardDone: (choice: FirstRunChoice) => Promise<void>;
+  finishWizard: () => Promise<void>;
+  setWizardStatus: (s: "wizard" | "busy" | "done" | "error") => void;
+}
+
+const WizardPanelContext = createContext<WizardPanelContextValue | null>(null);
+
+function useWizardPanel(): WizardPanelContextValue {
+  const v = useContext(WizardPanelContext);
+  if (v === null) {
+    throw new Error("useWizardPanel() 必须在 <WizardPanelContext.Provider> 内使用");
+  }
+  return v;
+}
 export default function App(): JSX.Element {
   const [caps, setCaps] = useState<HubCapabilities | null>(null);
+  // v9-3 Stage B1 首次启动三态：null=isFirstRun() 检测中（防闪屏 loading）、
+  // true=首次启动（挂向导）、false=正常流程（caps === null ? HubLauncher : AppInner）
+  const [firstRun, setFirstRun] = useState<boolean | null>(null);
+  // 'example' 导入流程状态：wizard|busy=向导页（busy 禁回车重按）、done=完成提示条、error=失败提示
+  const [wizardStatus, setWizardStatus] = useState<
+    "wizard" | "busy" | "done" | "error"
+  >("wizard");
+  /** done/error 提示条正文 */
+  const [wizardNotice, setWizardNotice] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void isFirstRun().then((v) => {
+      if (!cancelled) setFirstRun(v);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * 向导四分支（B1 任务书）：'example' 出口走 finishWizard（先 markFirstRunDone()
+   * 写 首次向导.flag，A2 契约，再 setFirstRun(false)）；'tutorial' / 'existing' /
+   * 'skip' 就地同序完成。'example' 的标记延后到提示条按钮：导入失败可「返回向导重试」，
+   * 此刻不算完成，不能提前写 flag。
+   * 'example'（施工方案 §6.3）：resolveResource 拿打包内示例图包绝对路径 →
+   * plugin-dialog 目录选择器（默认 $DOCUMENT/tts-packs/sample）→ hubClient.importTtsmod
+   * （POST /v1/pack/import-ttsmod）导入 → 成功提示条（解开目录 / objectsImported /
+   * warnings）→ finishWizard 进主界面。
+   * inFlight 守卫：FirstRunWizard 的回车监听在 window 级（A2 骨架），长按 Enter /
+   * 双击「开始」会重复触发 onDone——防重复弹目录选择器。
+   */
+  const finishWizard = useCallback(async (): Promise<void> => {
+    try {
+      await markFirstRunDone();
+    } catch {
+      /* flag 写失败也放行：否则可能困死在向导页；下次启动重出向导可接受 */
+    }
+    setFirstRun(false);
+  }, []);
+
+  const wizardInFlight = useRef(false);
+
+  const handleWizardDone = useCallback(async (choice: FirstRunChoice) => {
+    if (wizardInFlight.current) return;
+    wizardInFlight.current = true;
+    try {
+      await runWizardChoice(choice);
+    } finally {
+      wizardInFlight.current = false;
+    }
+  }, []);
+
+  const runWizardChoice = useCallback(async (choice: FirstRunChoice) => {
+    if (choice === "example") {
+      try {
+        // 1. 打包内 sample.ttsmod → 绝对路径（resolveResource，B1 任务书钦定）
+        const modFile = await resolveResource(SAMPLE_TTSMOD_RESOURCE);
+        // 2. 选解开目录：plugin-dialog 目录选择器，默认 $DOCUMENT/tts-packs/sample（B1
+        //    任务书钦定；defaultPath 指向不存在的 sample 时 dialog 落在其最近存在的父目录，
+        //    用户可「新建文件夹」造出 sample——importTtsmod 落地时 mkdir recursive 兜底）。
+        //    注：任务书说的"save-dialog"在 plugin-dialog 2.x 的 save() 上不存在 directory
+        //    选项（SaveDialogOptions 仅 title/filters/defaultPath/canCreateDirectories），
+        //    选目录的专用 API 是 open({directory:true})，故用之（同一插件）。
+        const documents = await documentDir();
+        const defaultTarget = await tauriJoin(
+          documents,
+          SAMPLE_PACKS_PARENT,
+          SAMPLE_DEFAULT_DIRNAME,
+        );
+        const target = await open({
+          title: "选择示例图包的解开目录",
+          directory: true,
+          multiple: false,
+          defaultPath: defaultTarget,
+        });
+        if (target === null) {
+          // 用户取消：不写 flag、不解包，留在向导页可重选（取消不是完成）
+          return;
+        }
+        // 3. 拆 modsParentDir（选目录的父目录）与 modSaveLocation（选目录名）
+        //    （/v1/pack/import-ttsmod 请求体契约，hub-control.md §4.17）
+        const parent = await tauriDirname(target);
+        const leaf = await tauriBasename(target);
+        setWizardStatus("busy");
+        // 4. 导入（绕过 firstRun 门直连 hub——此时 hub 可能还在启动，失败给出可重试提示）
+        const res = await hubClient.importTtsmod(modFile, parent, leaf);
+        setWizardNotice(
+          res.warnings.length === 0
+            ? `示例图包已解开到 ${target}（${res.objectsImported} 个文件），即将进入工作台。`
+            : `示例图包已解开到 ${target}（${res.objectsImported} 个文件，${res.warnings.length} 条警告）：\n${res.warnings.join("\n")}`,
+        );
+        setWizardStatus("done");
+      } catch (e) {
+        setWizardNotice(buildImportErrorText(e));
+        setWizardStatus("error");
+      }
+      return;
+    }
+    if (choice === "tutorial") {
+      try {
+        await markFirstRunDone();
+        await openUrl(TUTORIAL_URL);
+      } catch {
+        /* 同 finishWizard：放行优先，标记/开浏览器失败不困死向导 */
+      }
+      setFirstRun(false);
+      return;
+    }
+    // 'existing' / 'skip'：标记完成直接进正常流程
+    try {
+      await markFirstRunDone();
+    } catch {
+      /* 同 finishWizard：放行优先 */
+    }
+    setFirstRun(false);
+  }, []);
+
+  // 首次启动检测中：复用 wizard 全屏底色（var(--bp-dd)），不闪屏
+  if (firstRun === null) {
+    return (
+      <div className="wizard">
+        <div className="wizard-panel" role="status">
+          <p className="wizard-note">正在启动…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 首次启动：先过向导，再连 hub（HubLauncher）。三子态（FirstRunWizardPanel）：
+  //  wizard = FirstRunWizard 原样渲染（A2 交付物，不嵌额外面板——避免双 dialog 重复 aria）
+  //  busy   = 导入中：状态面板（role=status）
+  //  done/error = 完成提示条 / 失败提示条（role=alertdialog；error 方框标转 --red）
+  if (firstRun) {
+    return (
+      <div className="wizard">
+        <WizardPanelContext.Provider
+          value={{
+            wizardStatus,
+            wizardNotice,
+            handleWizardDone,
+            finishWizard,
+            setWizardStatus,
+          }}
+        >
+          <FirstRunWizardPanel />
+        </WizardPanelContext.Provider>
+      </div>
+    );
+  }
 
   // caps 未就绪：先过 HubLauncher（探测 / 引导 / 版本兼容门）——
   // 五层 Provider 都在验证通过后挂载，SSE / 确认门 / 死链 / 脏通道不接触未验证的 hub

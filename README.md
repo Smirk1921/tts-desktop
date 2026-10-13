@@ -3,7 +3,7 @@
 > TTS 图包工作台 — 蓝图纸语言桌面应用
 >
 > Round-03 设计方案（[ui-design/round-03](https://github.com/Smirk1921/tts-toolkit)）的 Tauri 2 + React 19 实现。
-> v0.8.0 窗口 UI-4：⓪总览 + 动效三件套 + 应用图标 + Tauri 打包完工。
+> v0.9.0 窗口 v9-3：一体化安装包（NSIS installerHooks 加 PATH / 首次向导 / 示例图包）完工。
 
 ## 前置依赖
 
@@ -11,7 +11,7 @@
 |---|---|---|
 | Windows | **10 1809+ / 11** | 仅 Windows（v0.1.0 不做跨平台） |
 | WebView2 Runtime | 任意 | Win10 1809+ 自带；缺失时 HubLauncher 引导面板顶部红条提示 + 一键下载 |
-| tts-toolkit (CLI) | **≥ 0.7.0** | 桌面应用经 `tts-hub` 与 TTS 通信；0.7.x 为降级模式（无 /v1/files 读写），0.8.0 解锁全功能 |
+| tts-toolkit (CLI) | 内嵌 | v0.1.0 起一体化安装包**自带 `tts-hub` sidecar**（v9-2 落地），无需用户手动 `npm install -g`。外置模式仍需 ≥0.9.0 |
 | Tabletop Simulator | 任意 Steam 版 | 联通功能需要；UI 空骨架可独立浏览 |
 | Node.js | **24+** | 仅开发期需要 |
 | Rust | **1.99+** (stable-msvc) | 仅开发期需要；`rustup` 安装 |
@@ -19,10 +19,18 @@
 
 ## 快速开始（用户）
 
+**v0.1.0 一体化安装包**（推荐，5 分钟上手）：
+
+1. 下载并运行 `tts-desktop_0.1.0_x64-setup.exe`
+2. 双击桌面「TTS 图包工作台」图标
+3. **首次启动**会弹出向导：默认推荐「打开示例图包」（16KB s_dial 演示包，立即可玩）；也可选「打开现有图包」或「查看 5 分钟教程」，或「跳过，直接进入」
+4. 装完即可用 —— 安装器已把 `bin\` 追加到用户 PATH（PowerShell 可直接 `tts --version` / `tts-hub`），并内嵌 `tts-hub` sidecar（无需手动 `npm install -g`）
+
+**外置 hub 模式**（高级用户 / 降级模式）：
+
 1. `npm install -g @smirk1921/tts-toolkit`（一次）
 2. 在图包工作区目录起一个终端跑 `tts-hub`（保持窗口开启）
-3. 运行安装包 `tts-desktop_0.1.0_x64-setup.exe`（或开发期 `npm run tauri dev`）
-4. 应用检测到 39995 端口的 hub → 进入五面工作台；未检测到 → 引导面板（一键复制安装/启动命令）
+3. 运行安装包，应用检测到 39995 端口的外置 hub（≥0.9.0 接收，<0.9.0 提示升级）→ 进入五面工作台
 
 ## 快速开始（开发）
 
@@ -75,3 +83,26 @@ npm run compare-screenshots  # 五面截图 vs round-03 基准 pixelmatch 比对
 ## License
 
 MIT © Smirk1921
+
+## 开发者：构建安装包
+
+v9-3 起安装器通过 Tauri 2 官方 **NSIS installerHooks** 机制注入自定义逻辑（`src-tauri/nsis/installer-hooks.nsh`，`tauri.conf.json` 的 `bundle.windows.nsis.installerHooks` 指向）。v9-3 简化（坑 35，见交接文档）：不做安装器勾选页，行为默认执行 —— 安装时把 `bin\` 幂等追加到**用户级 PATH**（HKCU，用 NSIS 自带 `${WordAdd}` 去重，**不需要 EnVar 插件**），检测到 VSCode（`%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe`）时把打包内 `.vsix` 拷到 `$INSTDIR\vscode-ext\`；卸载时幂等清 PATH + kill tts-hub 残留进程。
+
+1. **构建命令**（在 `tts-desktop/` 下）：
+   ```bash
+   npm run copy-product && npx tauri build
+   ```
+   - `npm run copy-product`：把 tts-toolkit 产物（sidecar .exe + resources）同步进 `src-tauri/`，并顺带执行 examples/vsix 两步收集（详见 `scripts/copy-product.mjs` 头注释）
+   - `npx tauri build`：Rust release 编译 + NSIS 打包（beforeBuildCommand 里已含前端 `vite build`）
+
+   可选资源收集脚本（copy-product 末尾会自动调；产物缺失时 vsix 自动跳过不阻塞构建）：
+   ```bash
+   node scripts/collect-vsix.mjs   # ../vscode-ext/ 最新 .vsix → src-tauri/resources/vscode-ext/（无 .vsix 时 warn 跳过）
+   node scripts/copy-example.mjs   # s_dial.ttsmod 夹具 → src-tauri/resources/examples/sample.ttsmod
+   ```
+
+2. **产物**：
+   ```
+   src-tauri/target/release/bundle/nsis/tts-desktop_0.1.0_x64-setup.exe
+   ```
+   安装器行为（v9-3 无勾选页，默认执行）：安装完成时 `bin\` 幂等追加到用户 PATH（`${WordAdd}` 去重 + WM_SETTINGCHANGE 广播）；检测到 VSCode 时把打包内 .vsix 拷到 `$INSTDIR\vscode-ext\`（终端手动 `code --install-extension <路径>` 安装）；卸载时幂等清 PATH + kill tts-hub 残留进程。

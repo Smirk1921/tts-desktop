@@ -1,8 +1,9 @@
 /**
  * HubClient（fetch 版）— UI-1b，施工方案 v0.8.0 §8.5-2
  *
- * 覆盖控制通道全部 16 条 JSON 路由（14 条既有 + /v1/files/read + /v1/files/write，
- * 契约：tts-toolkit/docs/schemas/hub-control.md §4 + v0.8.0 §8.4；接口签名见本窗口任务书）。
+ * 覆盖控制通道全部 17 条 JSON 路由（14 条既有 + /v1/files/read + /v1/files/write +
+ * /v1/pack/import-ttsmod（v9-3 首次向导例外，hub-control.md §4.17，专有 {ok:false,...} 错误体），
+ * 契约：tts-toolkit/docs/schemas/hub-control.md §4 + v0.8.0 §8.4）。
  * SSE 不在本类（见 ./sse.ts）——与 tts-toolkit 的 HubClient（src/mcp/client.ts）同构但面向浏览器。
  *
  * 错误约定：所有方法只抛 HubError（./errors.ts）。
@@ -108,6 +109,14 @@ export interface FilesWriteResult {
   size: number;
 }
 
+/** POST /v1/pack/import-ttsmod 成功响应（v9-3，hub-control.md §4.17——本路由响应体为
+ *  {ok:true,...} 专有形，错误体 {ok:false,code,message} 在方法内展开为 HubError） */
+export interface ImportTtsmodResult {
+  ok: true;
+  warnings: string[];
+  objectsImported: number;
+}
+
 interface ErrorBody {
   error?: { code?: unknown; message?: unknown; details?: unknown };
 }
@@ -191,6 +200,47 @@ export class HubClient {
 
   packBuild(opts: PackBuildOptions): Promise<unknown> {
     return this.request("POST", "/v1/pack/build", { body: opts });
+  }
+
+  /** v9-3 新增：POST /v1/pack/import-ttsmod——.ttsmod 解入 TTS 数据目录（首次向导
+   *  "打开示例图包"专用例外，hub-control.md §4.17）。本路由错误体是专有的
+   *  {ok:false,code,message} 形（非其余路由的 {error:{...}}），request() 统一归为
+   *  PARSE_ERROR——这里从 details 抢救出路由码与文案，还原为带语义的 HubError。 */
+  async importTtsmod(
+    file: string,
+    modsParentDir: string,
+    modSaveLocation: string,
+  ): Promise<ImportTtsmodResult> {
+    try {
+      return await this.request("POST", "/v1/pack/import-ttsmod", {
+        body: { file, modsParentDir, modSaveLocation },
+      });
+    } catch (e) {
+      if (
+        e instanceof HubError &&
+        e.code === "PARSE_ERROR" &&
+        typeof e.details === "string"
+      ) {
+        const body = safeParse(e.details) as {
+          ok?: unknown;
+          code?: unknown;
+          message?: unknown;
+        } | null;
+        if (
+          body !== null &&
+          body.ok === false &&
+          typeof body.code === "string" &&
+          typeof body.message === "string"
+        ) {
+          throw new HubError({
+            code: body.code,
+            message: body.message,
+            httpStatus: e.httpStatus,
+          });
+        }
+      }
+      throw e;
+    }
   }
 
   shutdown(): Promise<HubOk> {

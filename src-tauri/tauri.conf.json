@@ -30,7 +30,11 @@
     "active": true,
     "targets": ["nsis"],
     "externalBin": ["bin/tts-hub"],
-    "resources": ["resources/sidecar"],
+    "resources": [
+      "resources/sidecar",
+      "resources/examples",
+      "resources/vscode-ext"
+    ],
     "publisher": "Smirk1921",
     "copyright": "© 2026 Smirk1921",
     "shortDescription": "TTS 图包制作维护工作台",
@@ -46,6 +50,7 @@
         "type": "downloadBootstrapper"
       },
       "nsis": {
+        "installerHooks": "nsis/installer-hooks.nsh",
         "displayLanguageSelector": false,
         "languages": ["SimpChinese"],
         "startMenuFolder": "TTS 图包工作台"
