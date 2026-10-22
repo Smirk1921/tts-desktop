@@ -74,15 +74,16 @@ fn is_webview2_present() -> bool {
 
 /// 查询 hub 运行状态命令（v9-2，前端 HubLauncher 轮询用）。
 ///
-/// 简化版：只做 Rust 侧 TCP 探测（[`sidecar::is_hub_running`]，有界 200ms 阻塞），
-/// 判断 39995 是否 LISTENING。`version` / `is_embedded` 由前端并发调
-/// `GET /v1/status`（版本字段在 `hub.version`，v9-2 契约）补充，这里恒为 `None` / `false`。
+/// v9-4 hotfix：`is_embedded` 不再恒为 false——查询 [`sidecar::SIDECAR_CHILD`]
+/// 是否有存活的子进程（`try_wait` 返回 Ok(None) = 仍在跑）。sidecar 自起场景下
+/// 前端据此跳过版本检查（审批意见 §12：sidecar 与 desktop 绑定必然兼容）。
+/// `version` 仍由前端并发调 `GET /v1/status` 补充，这里恒为 `None`。
 #[tauri::command]
 fn sidecar_get_status() -> sidecar::HubStatus {
     sidecar::HubStatus {
         running: sidecar::is_hub_running(sidecar::HUB_PORT),
         version: None,
-        is_embedded: false,
+        is_embedded: sidecar::is_sidecar_alive(),
     }
 }
 

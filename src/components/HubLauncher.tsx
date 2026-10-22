@@ -97,7 +97,14 @@ export default function HubLauncher({ onReady }: HubLauncherProps) {
     setBusy(true);
     try {
       // 端口探测与 WebView2 检测同轮发起；后者失败按「不可知」处理，不误报
-      const [hubUp, wv2Present] = await Promise.all([probePort(), probeWebview2()]);
+      // v9-4 hotfix：并发调 probeSidecar 拿 is_embedded——sidecar 自起的 hub
+      // 绑定本 desktop 必然兼容（审批意见 §12），跳过版本检查直接 onReady；
+      // 否则按外置 hub 走 EXTERNAL_MIN_VERSION 检查。
+      const [hubUp, wv2Present, sidecar] = await Promise.all([
+        probePort(),
+        probeWebview2(),
+        probeSidecar(),
+      ]);
       setWv2Missing(!wv2Present);
       if (!hubUp) {
         // 端口不通：Tauri 下 Rust 正在 spawn 内嵌 sidecar → 轮询等待；
@@ -106,6 +113,12 @@ export default function HubLauncher({ onReady }: HubLauncherProps) {
         return;
       }
       const caps = capabilitiesFromStatus(await hubClient.status());
+      // sidecar 自起场景：跳过版本检查（v9-4 hotfix，审批意见 §12 原意；
+      // v9-3 漏读 is_embedded 导致 0.8.0 sidecar 被外置检查拦截）
+      if (sidecar?.is_embedded === true) {
+        onReady(caps);
+        return;
+      }
       if (compareSemver(caps.version, EXTERNAL_MIN_VERSION) >= 0) {
         onReady(caps);
         return;

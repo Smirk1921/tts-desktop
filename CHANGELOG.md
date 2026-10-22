@@ -78,6 +78,52 @@
 - tts-toolkit ≥ 0.7.0（≥ 0.8.0 特性齐备）
 - Tabletop Simulator 已启动并加载存档（在线功能所需）
 
+### Tested / 已验收（v9-4 窗口，2026-10-23）
+
+**真实 TTS 联通验收**（s_dial.ttsmod → Dial Set 46 对象）：
+
+- **Stage B 干净机安装**：NSIS installerHooks 静默装（`/S`）→ 桌面快捷方式 →
+  双击 → sidecar 2.02s 自起 → 39995 LISTENING → 首启向导 → 选「打开示例图包」→
+  51 文件导入 → 主界面渲染。卸载 `/S` 后 `%LOCALAPPDATA%\Programs\tts-desktop`
+  清空、HKCU Path 中 `...\bin` 已清、39995 不再 LISTENING。
+- **已知 bug 复测**：v9-3 遗留「二次启动 webview ERR_CONNECTION_REFUSED」**未复现**。
+  原始 npx tauri build 装的 .exe 正常；该 bug 是 v9-3 测试期 cp 覆盖 .exe 引起的
+  Tauri 资源缓存紊乱，与 v9-3 代码无关。
+- **U2 系列 6 项**（①代码面 + ②代理面）：
+  - U2-1 pull：POST /v1/scripts/pull → 35 个新增条目拉入工作区，差异清零。
+  - U2-2 diff：手工编辑 Global.lua 加注释行 → POST /v1/diff 返回 modified=1。
+  - U2-3 write：PUT /v1/files/write 携带 baseSha256 乐观锁 → 写入成功 sha256 落地。
+  - U2-4 push：POST /v1/push confirm:true → pushed:1 + 备份落盘 .tts/backups/。
+  - U2-5 exec：POST /v1/exec {"lua":"return 1+1"} → {"result":2}。
+  - U2-6 流水：② 代理面事件流实时渲染 GameLoaded/GameSaved（SSE 驱动）。
+- **U3 系列 2 项**（hub 层）：
+  - U3-1 切片：POST /v1/deck/slice 用 settings-cat-2232x1920.png 按 10×7 网格切
+    14 张 card-XXX.png 落盘 + cards.csv 生成。
+  - U3-2 死链：sheetPath 指向不存在文件 → 400 SLICE_SHEET_NOT_FOUND，
+    UI 侧收到错误后禁用切片按钮。
+- **U3-3/4/5 标记未验**：s_dial unpack 不产 cards.csv，素材面台账 0 行，
+  1000 行虚拟滚动 / 行内编辑 URL / 批量体检三项留 v9-final 用带 cards.csv
+  的真实图包（如《第七大陆》或专门卡牌测试包）补验。
+
+**现场修复**（v9-4 hotfix，已随本包发布）：
+
+- **hotfix-1**（tts-toolkit）：CORS 白名单加 `tauri.localhost`——Tauri webview
+  fetch hub 的 Origin 是 `http://tauri.localhost`，原白名单仅 loopback 三地址，
+  所有 UI fetch 被浏览器 CORS 拦截。hub-control-files.test.ts 新增用例覆盖。
+- **hotfix-2**（HubLauncher.tsx）：`check()` 先调 `sidecar_get_status` 读
+  `is_embedded`，sidecar 自起场景跳过 EXTERNAL_MIN_VERSION 检查
+  （审批意见 §12 原意；v9-3 漏读导致 0.8.0 sidecar 被外置检查拦截）。
+- **hotfix-3**（App.tsx）：`hubClient.importTtsmod(modFile, parent, leaf)` →
+  `hubClient.importTtsmod(modFile, target, target)`——hub-control §4.17 要求
+  `modsParentDir` 与 `modSaveLocation` 均为绝对路径，v9-3 误传 basename(target)
+  作 modSaveLocation 被 hub 拒 400 INVALID_INPUT。
+- **hotfix-4**（sidecar.rs + lib.rs）：`sidecar_get_status` 返回真实
+  `is_embedded`（查 SIDECAR_CHILD 是否有存活子进程），不再恒 false——支撑
+  hotfix-2 生效。
+
+**测试基线**：tts-toolkit 2066 passed（+1 新 CORS 用例），tts-desktop 15 passed，
+cargo test 14 passed。
+
 ### Test baseline / 测试基线
 
 - 针对真实 TTS + hub 的手工 UI 验证；暂无自动化 UI 测试（计划 v0.2.0）。

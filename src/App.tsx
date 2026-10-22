@@ -55,8 +55,6 @@ import {
   type JSX,
 } from "react";
 import {
-  basename as tauriBasename,
-  dirname as tauriDirname,
   documentDir,
   join as tauriJoin,
   resolveResource,
@@ -591,13 +589,14 @@ export default function App(): JSX.Element {
           // 用户取消：不写 flag、不解包，留在向导页可重选（取消不是完成）
           return;
         }
-        // 3. 拆 modsParentDir（选目录的父目录）与 modSaveLocation（选目录名）
-        //    （/v1/pack/import-ttsmod 请求体契约，hub-control.md §4.17）
-        const parent = await tauriDirname(target);
-        const leaf = await tauriBasename(target);
+        // 3. 契约修正（v9-4 hotfix）：hub-control.md §4.17 要求 modsParentDir / modSaveLocation
+        //    均为绝对路径；Mods/ 前缀条目解到 modsParentDir、其余解到 modSaveLocation。
+        //    v9-3 误传 basename(target) 作 modSaveLocation → hub 拒 400 INVALID_INPUT。
+        //    这里两者都传 target（用户选的完整解开目录）——示例图包内 Mods/... 与 Saves/...
+        //    都落到同一目标根，符合"打开示例图包"语义。
         setWizardStatus("busy");
         // 4. 导入（绕过 firstRun 门直连 hub——此时 hub 可能还在启动，失败给出可重试提示）
-        const res = await hubClient.importTtsmod(modFile, parent, leaf);
+        const res = await hubClient.importTtsmod(modFile, target, target);
         setWizardNotice(
           res.warnings.length === 0
             ? `示例图包已解开到 ${target}（${res.objectsImported} 个文件），即将进入工作台。`

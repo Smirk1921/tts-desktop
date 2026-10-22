@@ -215,6 +215,23 @@ pub fn stop_hub_sidecar() {
     }
 }
 
+/// 查询 SIDECAR_CHILD 中是否有仍存活的 sidecar 子进程（v9-4 hotfix）。
+///
+/// - 无 sidecar 记录 → false（外置 hub 场景或未启动）
+/// - 有记录且 `try_wait` 返回 `Ok(None)` → true（子进程仍在跑）
+/// - 有记录但子进程已退出（`Ok(Some(_))`）/ 查询失败 → false（副作用：不清理，
+///   清理由 [`stop_hub_sidecar`] 负责——它 take() 掉后本函数自然归 false）
+///
+/// 前端 HubLauncher 据此跳过 sidecar 场景的版本检查（审批意见 §12：
+/// sidecar 与 desktop 绑定必然兼容）。
+pub fn is_sidecar_alive() -> bool {
+    let mut guard = SIDECAR_CHILD.lock().expect("SIDECAR_CHILD poisoned");
+    match guard.as_mut() {
+        None => false,
+        Some(child) => matches!(child.try_wait(), Ok(None)),
+    }
+}
+
 /// spawn `node_exe + dist/cli/hub-main.js` 并登记到 [`SIDECAR_CHILD`]。
 ///
 /// ⭐ `Command::new()` / `.arg()` 自动处理含空格路径（如 `C:\Program Files\TTS工作台\`），

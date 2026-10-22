@@ -145,13 +145,14 @@ describe("App 首次向导接线（Stage B1）", () => {
       directory: true,
       defaultPath: "C:\\Users\\u\\Documents\\tts-packs\\sample",
     });
-    // 请求体契约（hub-control.md §4.17）：modsParentDir=选目录父目录、modSaveLocation=选目录名
+    // 请求体契约（hub-control.md §4.17，v9-4 hotfix）：modsParentDir / modSaveLocation 均传
+    // 选目录完整绝对路径——v9-3 误传 basename 被 hub 拒 400，修正为两者同值
     // （file = resolveResource 原样返回值，mock 拼接保留资源路径自身的 `/` 分隔符）
     await waitFor(() => {
       expect(hubClient.importTtsmod).toHaveBeenCalledWith(
         "C:\\res\\resources/examples/sample.ttsmod",
-        "C:\\Users\\u\\Documents\\tts-packs",
-        "sample",
+        "C:\\Users\\u\\Documents\\tts-packs\\sample",
+        "C:\\Users\\u\\Documents\\tts-packs\\sample",
       );
     });
     // busy 态出现（禁重按）后到完成提示条
