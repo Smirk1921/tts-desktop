@@ -54,3 +54,41 @@ v9-4 在干净机安装包上做了 4 个现场修复，均影响截图所见的
 1. **U3-3/4/5 在 s_dial 上跑不了**：s_dial 无 cards.csv，素材面台账 0 行。建议 v9-final 用带 cards.csv 的真实图包（如《第七大陆》或专门的卡牌测试包）补 U3-3/4/5 三项。
 2. **③ 卡牌面在 s_dial 上空**：s_dial 全是 CustomModel 转盘不是卡牌，③ 面只能验空态。真实卡牌图集切片验收已在 hub 层过（14 张 settings-cat 切片），UI 层网格渲染留 v9-final 用真卡牌图包补。
 3. **安装器体积**：33.46 MiB（v9-3 33.16 + 0.3），仍在 ≤35 MiB 红线内。
+
+---
+
+## 六、窗口 v9-final 补验段（2026-10-23）
+
+> 承接 v9-4 遗留：U3-3/4/5 在 s_dial 上跑不了，v9-final 用最小卡牌测试包 s_cardtest.ttsmod 补验。
+
+### 6.1 补验图包
+
+| 项 | 值 |
+|---|---|
+| 图包 | s_cardtest.ttsmod（1135 bytes，1 个 CustomDeck × 10 张卡，10×1 网格） |
+| 建造脚本 | `tts-toolkit/scripts/make-card-fixture.mjs` |
+| 集成测试 | `tts-toolkit/tests/integration/card-fixture.acceptance.test.ts` |
+| 工作区 | `C:/temp/v9-final-pack/`（1000 行台账 cards.csv：950 活 + 50 死） |
+
+### 6.2 U3-3/4/5 补验结果
+
+| 项 | 结果 | 证据 |
+|---|---|---|
+| U3-3 台账 1000 行虚拟滚动 | ✅ | 素材面显示「虚拟化: on · 1000 行」，DOM 只渲染可视区 ~30 行，分组 全部(1000)/deck 500/object 500 |
+| U3-4 行内编辑 URL → 保存 → 重新体检死链消失 | ✅ | asset-0951 死→活（死链 50→49），asset-0999 活→死（死链 49→50），保存落盘验证（cards.csv mtime 更新） |
+| U3-5 批量体检 → 死链标红 | ✅ | 「✓ 体检完成：51 条 URL · 存活 1 · 死链 50」，object 分组 ✗50 标红，底部状态栏 50 死链 |
+
+### 6.3 截图状态
+
+- **IAB 截图在 1000 行虚拟滚动下超时**（3000ms 限制），①③④ 面 PNG 截图未完成
+- 改文字记录关键 DOM 状态（见 6.2 证据列）
+- **真实联通态截图留 v0.9.1 补拍**（需 TTS 连 hub，VSCode 插件或手动注入桥接代码）
+
+### 6.4 发版产物
+
+| 产物 | 位置 | 验证 |
+|---|---|---|
+| npm 包 | `@smirk1921/tts-toolkit@0.9.0` | `npm view` 0.9.0 / `npm install -g` / `tts --version` 0.9.0 |
+| tts-toolkit Release | tag `v0.9.0` | 手动 `gh release create`（release.yml 未补 `gh release create`） |
+| tts-desktop Release | tag `v0.2.0` + NSIS `tts-desktop_0.2.0_x64-setup.exe` | 手动 `gh release create` 附安装包 |
+| 包体 | 33.48 MiB（红线 ≤35 MiB 内） | 实测 |
