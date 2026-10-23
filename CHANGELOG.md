@@ -8,10 +8,7 @@
 
 ## [Unreleased]
 
-> 占位：v0.1.0 之后的变更从这里开始累积。UI-4 收尾（动效三件套、Tauri 打包、
-> 五面截图比对）尚未合并前的条目仍并入下面的 `[0.1.0]` 段。
-
-## [0.2.0] - 2026-10-XX — Embedded hub sidecar
+## [0.2.0] - 2026-10-23 — All-in-one installer + first-run wizard + real TTS acceptance
 
 ### Added / 新增
 
@@ -44,39 +41,24 @@
 - **.gitignore**: excludes sidecar artifacts (src-tauri/bin/tts-hub-*.exe and
   src-tauri/resources/sidecar/) — regenerated on each build.
 
+### Added / 新增（v9-3 窗口）
+
+- **一体化安装包**：NSIS installerHooks 加 PATH（可选勾选"添加 bin 到 PATH"），安装后 PowerShell 直接 `tts --version` 可用；卸载 `/S` 静默后 PATH 干净无残留。
+- **首次向导**：`FirstRunWizard.tsx` + `firstRun.ts` + `App.tsx` 三态切换，提供「打开示例图包」（默认）/「打开已有图包」/「查看教程」三个选项，回车即选默认。
+- **示例图包**：`src-tauri/resources/examples/sample.ttsmod`（16 KB，来自 v8-2 自制夹具匿名化）。
+
+### Fixed / 修复（v9-4 hotfix）
+
+- **hotfix-1**（tts-toolkit）：CORS 白名单加 `tauri\.localhost` —— Tauri webview fetch hub 的 Origin 是 `http://tauri.localhost`，原白名单仅 loopback 三地址，所有 UI fetch 被浏览器 CORS 拦截。
+- **hotfix-2**（HubLauncher.tsx）：`check()` 先调 `sidecar_get_status` 读 `is_embedded`，sidecar 自起场景跳过 EXTERNAL_MIN_VERSION 检查。
+- **hotfix-3**（App.tsx）：`hubClient.importTtsmod(modFile, target, target)` —— hub-control §4.17 要求 `modsParentDir` 与 `modSaveLocation` 均为绝对路径。
+- **hotfix-4**（sidecar.rs + lib.rs）：`sidecar_get_status` 返回真实 `is_embedded`（查 SIDECAR_CHILD 是否有存活子进程）。
+
 ### Requirements / 运行要求
 
 - Windows 10 1809+ (WebView2 auto-installed via downloadBootstrapper on first run)
 - Tabletop Simulator running with a save loaded (for online features)
 - v9-1 product outputs from tts-toolkit (for sidecar bundling)
-
-## [0.1.0] - 2026-10-08
-
-### Added / 新增
-
-- **桌面工作台**：tts-toolkit 的桌面端工作台，实现 Round-03 蓝图设计
-  （工程图纸语法、双线图框、三层字族）。
-- **五面**：总览（Overview）／代码（Code）／代理（Agent）／卡牌（Cards）／素材（Assets）。
-- **九个可复用组件**：Frame、LayerNav、LegendBar、SignBlock、ConfirmGate、
-  ProcessStamps、JobSheet、EventFlow、SliceGrid。
-- **hub 集成**：基于 fetch 的 HubClient（16 条路由）、经 EventSource 的 SSE 事件流、
-  版本兼容检查（与 tts-toolkit ≥ 0.7.0 可运行，≥ 0.8.0 特性齐备）。
-- **确认门（ConfirmGate）**：所有危险操作（push、批量覆盖）一律经确认门，
-  并向 hub 传 `confirm: true`。
-- **跨面联动**：素材面的死链卡片会禁用卡牌面的切片按钮。
-- **设计令牌**：13 个 CSS 变量（双色底蓝图 + 4 个语义色 + 3 层字族 + 动效令牌），
-  全站不写死值。
-
-### Fixed / 修复
-
-- **⓪总览面**：事件流块（.ov-ev）高度未占满右列——`flex: 1` 改为 `flex: 1 1 0`，
-  修复 VERDICT.md §四.2 记录的"事件流块比左列 MiniFileTree 矮一截"问题。
-
-### Requirements / 运行要求
-
-- Windows 10 1809+（WebView2）
-- tts-toolkit ≥ 0.7.0（≥ 0.8.0 特性齐备）
-- Tabletop Simulator 已启动并加载存档（在线功能所需）
 
 ### Tested / 已验收（v9-4 窗口，2026-10-23）
 
@@ -123,6 +105,34 @@
 
 **测试基线**：tts-toolkit 2066 passed（+1 新 CORS 用例），tts-desktop 15 passed，
 cargo test 14 passed。
+
+## [0.1.0] - 2026-10-08
+
+### Added / 新增
+
+- **桌面工作台**：tts-toolkit 的桌面端工作台，实现 Round-03 蓝图设计
+  （工程图纸语法、双线图框、三层字族）。
+- **五面**：总览（Overview）／代码（Code）／代理（Agent）／卡牌（Cards）／素材（Assets）。
+- **九个可复用组件**：Frame、LayerNav、LegendBar、SignBlock、ConfirmGate、
+  ProcessStamps、JobSheet、EventFlow、SliceGrid。
+- **hub 集成**：基于 fetch 的 HubClient（16 条路由）、经 EventSource 的 SSE 事件流、
+  版本兼容检查（与 tts-toolkit ≥ 0.7.0 可运行，≥ 0.8.0 特性齐备）。
+- **确认门（ConfirmGate）**：所有危险操作（push、批量覆盖）一律经确认门，
+  并向 hub 传 `confirm: true`。
+- **跨面联动**：素材面的死链卡片会禁用卡牌面的切片按钮。
+- **设计令牌**：13 个 CSS 变量（双色底蓝图 + 4 个语义色 + 3 层字族 + 动效令牌），
+  全站不写死值。
+
+### Fixed / 修复
+
+- **⓪总览面**：事件流块（.ov-ev）高度未占满右列——`flex: 1` 改为 `flex: 1 1 0`，
+  修复 VERDICT.md §四.2 记录的"事件流块比左列 MiniFileTree 矮一截"问题。
+
+### Requirements / 运行要求
+
+- Windows 10 1809+（WebView2）
+- tts-toolkit ≥ 0.7.0（≥ 0.8.0 特性齐备）
+- Tabletop Simulator 已启动并加载存档（在线功能所需）
 
 ### Test baseline / 测试基线
 

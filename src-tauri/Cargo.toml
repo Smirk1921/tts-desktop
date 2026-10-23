@@ -1,6 +1,6 @@
 [package]
 name = "tts-desktop"
-version = "0.1.0"
+version = "0.2.0"
 description = "TTS 图包制作维护工作台（Tauri 壳）"
 authors = ["Smirk1921"]
 edition = "2021"
