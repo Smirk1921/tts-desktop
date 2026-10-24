@@ -50,6 +50,20 @@ jobs:
       - name: Build (frontend)
         run: npm run build
 
+      # tauri-build 校验 externalBin/resources 存在性（坑 44）：sidecar 本体是 node.exe 改名
+      # （见 copy-product.mjs 目录映射），check 阶段只验存在、不验内容，直接复用
+      # setup-node 装好的 node.exe；resources/sidecar/ 同样是 copy-product.mjs 的本地
+      # 产物（gitignore），建空目录占位即可（examples/vscode-ext 已入库无需处理）。
+      # ⚠️ 真正打进安装包的 sidecar 与资源仍由本地 copy-product.mjs 生成
+      # （release 流程不变），此处仅为满足 cargo check。
+      - name: Prepare sidecar stub for tauri-build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src-tauri/bin | Out-Null
+          Copy-Item (Get-Command node).Source "src-tauri/bin/tts-hub-x86_64-pc-windows-msvc.exe" -Force
+          New-Item -ItemType Directory -Force -Path src-tauri/resources/sidecar | Out-Null
+          Set-Content -Path src-tauri/resources/sidecar/.ci-placeholder -Value "stub for cargo check only"
+
       # 缓存必须在 cargo check **之前**：actions/cache 在步骤开始时恢复，命中即省掉
       # 依赖下载与全量编译；未命中时它注册 post 钩子，在 job 结束时保存本次产物。
       # 用官方 actions/cache 而非 Swatinem/rust-cache（第三方 action，此处不需要它的
